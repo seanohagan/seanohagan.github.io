@@ -8,8 +8,8 @@ redirect_from:
   - /about.html
 ---
 
-Hi, I'm Sean O'Hagan, an undergraduate student at the University of Connecticut studying mathematics and statistics. 
+I'm an undergraduate student at the University of Connecticut studying mathematics and statistics. 
 
 I am broadly interested in probability, statistics, and analysis.
 
-In my free time, I enjoy snowboarding, exercise, and the Rubik's cube.
+In my free time, I enjoy snowboarding, exercising, and puzzles like the Rubik's cube.
