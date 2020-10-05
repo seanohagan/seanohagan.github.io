@@ -2,6 +2,7 @@
 title: 'Bayesian Introduction'
 date: 2020-10-05
 permalink: /posts/bayesian-intro/
+collection: posts
 tags:
   - cool posts
 ---
