@@ -1,11 +1,9 @@
 ---
-title: "Portfolio item number 1"
-excerpt: "Short description of portfolio item number 1<br/><img src='/images/500x300.png'>"
+title: "Introduction to Bayesian Inference"
+excerpt: "A brief overview and visualization of Bayesian inference<br/><img src='/images/thumb_bayes.png'>"
 collection: portfolio
 ---
 
-
-# Introduction to Bayesian Inference
 
 Say we are given a coin with an unknown success probability $\hat{p}$. Instead of viewing $\hat{p}$ as a fixed, unknown value, we instead treat it as a random variable, with its own distribution. As we flip the coin, we can update our previous belief of the distribution with the new information from the subsequent coin flips to obtain a new proposed distribution.
 
