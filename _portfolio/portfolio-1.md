@@ -20,6 +20,8 @@ In the example below, we show the updating process of the distribution of the su
   });
 </script>
 
+[View the Observable Notebook Here](https://observablehq.com/@sean-ohagan/coin-flip)
+
 ## Frequentist vs Bayesian Probability
 
 Statistical inference is the process of drawing conclusions about the distribution of data from a sample. Commonly, the goal is to estimate the values of _parameters_ of the distribution— for example, the probability that a coin yields a result of heads.
