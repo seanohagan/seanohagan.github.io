@@ -20,7 +20,8 @@ In the example below, we show the updating process of the distribution of the su
   });
 </script>
 
-[View the Observable Notebook Here](https://observablehq.com/@sean-ohagan/coin-flip)
+
+View the full Observable notebook, including the source, [here](https://observablehq.com/@sean-ohagan/coin-flip)
 
 ## Frequentist vs Bayesian Probability
 
@@ -48,22 +49,33 @@ $$P(\theta\|y) = \frac{P(y\|\theta)P(\theta)}{P(y)}$$
 
 The process of inference in a Bayesian setting is the process of calculating a posterior distribution on $\theta$ given the observed data $y$ and a given prior (often uniform in practice, or an educated guess). DeFinetti's theorem guarantees that the same posterior distribution will be reached independent of how many times the updating procedure is done and the order by which it is done ~ADD more here later~
 
-The maximum a posteriori, or MAP estimate, is a point estimate for a parameter obtained by taking the mode of the posterior distribution. This can be viewed as the Bayesian equivalent of the maximum likelihood estimate (MLE), and is actually equivalent in the case when a uniform prior is used.
+The maximum a posteriori, or MAP estimate, is a point estimate for a parameter obtained by taking the mode of the posterior distribution. This can be viewed as the Bayesian equivalent of the maximum likelihood estimate (MLE), and is equivalent in the case when a uniform prior is used.
 
-Credible intervals are the Bayesian counterpart to confidence intervals. The two sided credible interval at the $\alpha$ significance level contains $1-\alpha$ of the probability mass, and is weighted such that $\frac{\alpha}{2}$ is left on each tail.
+Credible intervals are the Bayesian counterpart to confidence intervals. The two sided credible interval at the $\alpha$ significance level contains $1-\alpha$ of the probability mass of the posterior distribution, and is weighted such that $\frac{\alpha}{2}$ is left in the tail on each side.
 
 ## Computing the Posterior
 
 Computing the normalizing factor $P(y)$ turns out to be often difficult in practice-- it is typically calculated as
 $$P(y)=\int P(y|\theta)P(\theta)\,\mathrm{d}\theta.$$
-However, in real application such an integral often becomes nearly impossible to solve analytically, and difficult to approximate using canonical numerical techniques. Before discussing the solution to this issue, we first discuss a special case that avoids it entirely.
+However, in real applications, particularly high-dimensional ones, such an integral often becomes nearly impossible to solve analytically, and difficult to approximate using canonical numerical techniques. Before discussing the solution to this issue, we first discuss a special case that avoids it entirely.
 
-#### Conjugate Priors
+### Conjugate Priors
 
-Note above that computing the normalization factor comes down to integrating the product of the likelihood and the prior. Because of this, knowing that the data which we are modeling follows a certain likelihood function, we may choose our prior in a crafty way to make this integral easy to compute. Additionally, we may choose it such that the resulting posterior distribution is in the same parametric family as the prior.
+The posterior distribution is proportional to the product of the prior and the likelihood, and computing the normalization factor is often the difficult part. However, for certain pairs of prior distributions and likelihood functions, called _conjugates_, the posterior will conveniently be of the same family of distributions as the prior.
 
-The classic example of a conjugate prior is using a beta prior with a Bernoulli (or binomial) likelihood.
+For example, consider a beta prior and a binomial likelihood function. Observe
 
+$$\frac{\binom{n}{x}\theta^x(1-\theta)^{n-x} \frac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}\theta^{\alpha-1}(1-\theta)^{\beta-1}}{\int_0^1\binom{n}{x}\theta^x(1-\theta)^{n-x}\frac{\Gamma(\alpha+\beta)}{\Gamma(\alpha)\Gamma(\beta)}\theta^{\alpha-1}(1-\theta)^{\beta-1}\,d\theta}$$
+
+(Incomplete)
 
 
 ### Sampling
+
+When we do not have the luxury of using conjugate priors, it is often necessary to use numerical methods to approximate the posterior distribution. The most popular and relevant of these are known as Markov Chain Monte Carlo (MCMC) methods. 
+
+In essence, the goal is to create a Markov chain who's equilibrium distribution is the posterior distribution. Then, after we let the chain get sufficiently close to the equilibrium distribution (burn-in period), sampling states from the chain approximates sampling points from the distribution. We can use these points to approximate the distribution with a histogram.
+
+A natural question at this point remains: how do we construct such a Markov chain?
+
+While there are many methods of doing this, the most classical one is the Metropolis-Hastings algorithm
