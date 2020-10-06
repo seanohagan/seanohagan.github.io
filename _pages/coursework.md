@@ -6,4 +6,4 @@ redirect_from:
   - /coursework.html
 ---
 
-# TBD
+# Placeholder
