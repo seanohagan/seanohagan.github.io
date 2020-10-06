@@ -1,6 +1,6 @@
 ---
 permalink: /
-title: "About me"
+title: "Sean O'Hagan"
 excerpt: "About me"
 author_profile: true
 redirect_from: 
@@ -8,8 +8,8 @@ redirect_from:
   - /about.html
 ---
 
-I'm an undergraduate student at the University of Connecticut studying mathematics and statistics. 
+I'm a senior undergraduate student at the University of Connecticut studying mathematics and statistics, with some coursework in physics as well.
 
-I am broadly interested in probability, statistics, and analysis.
+I am broadly interested in probability, statistics, and analysis. 
 
-In my free time, I enjoy snowboarding, exercising, and puzzles like the Rubik's cube.
+In my free time, I enjoy snowboarding, exercising, puzzles, and spending time with friends and family.
