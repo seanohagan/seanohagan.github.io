@@ -180,7 +180,7 @@ collections:
     permalink: /:collection/:path/
   portfolio:
     output: true
-    permalink: /:collection/:path/
+    permalink: /blog/:path/
   posts:
     output: true
     permalink: /:collection/:path/
