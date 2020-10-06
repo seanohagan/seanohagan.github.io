@@ -37,11 +37,11 @@ $$P(A|B)=\frac{P(B|A)P(A)}{P(B)}$$
 
 In inference problems, we often let $\theta$ denote the parameter(s) in question, and $y$ denote the data that we observed. We may then apply Bayes' theorem:
 
-$$P(\theta|y) = \frac{P(y|\theta)P(\theta)}{P(y)}$$
+$$P(\theta\|y) = \frac{P(y\|\theta)P(\theta)}{P(y)}$$
 
-- $P(\theta|y)$ is called the *posterior distribution*-- this is what we are trying to calculate, as it will give us a distribution on $\theta$.
+- $P(\theta\|y)$ is called the *posterior distribution*-- this is what we are trying to calculate, as it will give us a distribution on $\theta$.
 - $P(\theta)$ is our *prior distribution*-- this quantifies our previous beliefs on $\theta$. A uniform prior would represent no prior knowledge.
-- $P(y|\theta)$ is our *likelihood* function-- this represents how likely we are to obtain the observed data given a value of $\theta$
+- $P(y\|\theta)$ is our *likelihood* function-- this represents how likely we are to obtain the observed data given a value of $\theta$
 - $P(y)$ represents a normalization factor
 
 ## Inference
