@@ -5,10 +5,10 @@ main:
     url: /blog/
         
   - title: "Research"
-    url: /posts/
+    url: /research/
     
   - title: "CV"
     url: /cv/
     
-  - title: "Contact"
-    url: /markdown/
+  - title: "Coursework"
+    url: /coursework/
