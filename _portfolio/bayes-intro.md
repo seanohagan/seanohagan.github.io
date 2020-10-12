@@ -72,9 +72,9 @@ $$\frac{\binom{n}{x}\theta^x(1-\theta)^{n-x} \frac{\Gamma(\alpha + \beta)}{\Gamm
 
 ### Sampling
 
-When we do not have the luxury of using conjugate priors, it is often necessary to use numerical methods to approximate the posterior distribution. The most popular and relevant of these are known as Markov Chain Monte Carlo (MCMC) methods. 
+When we do not have the luxury of using conjugate priors, it is often necessary to use numerical methods to approximate the posterior distribution. A frequently used example of these are known as Markov Chain Monte Carlo (MCMC) methods. 
 
-In essence, the goal is to create a Markov chain who's equilibrium distribution is the posterior distribution. Then, after we let the chain get sufficiently close to the equilibrium distribution (burn-in period), sampling states from the chain approximates sampling points from the distribution. We can use these points to approximate the distribution with a histogram.
+In essence, the goal is to create a Markov chain with an equilibrium distribution equal to the posterior distribution. Then, after we let the chain get sufficiently close to the equilibrium distribution (burn-in period), sampling states from the chain approximates sampling points from the distribution. We can use these points to approximate the distribution with a histogram.
 
 A natural question at this point remains: how do we construct such a Markov chain?
 

@@ -8,7 +8,7 @@ redirect_from:
   - /about.html
 ---
 
-I'm a senior undergraduate student at the University of Connecticut studying mathematics and statistics, with some coursework in physics as well.
+I'm a senior undergraduate student at the University of Connecticut studying mathematics and statistics.
 
 I am broadly interested in probability, statistics, and analysis. 
 
