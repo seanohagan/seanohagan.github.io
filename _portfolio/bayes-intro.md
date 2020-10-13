@@ -7,7 +7,7 @@ collection: portfolio
 
 Say we are given a coin with an unknown success probability $\hat{p}$. Instead of viewing $\hat{p}$ as a fixed, unknown value, we instead treat it as a random variable, with its own distribution. As we flip the coin, we can update our previous belief of the distribution with the new information from the subsequent coin flips to obtain a new proposed distribution.
 
-In the example below, we show the updating process of the distribution of the success probablity of coin. The parameters on the right represent the actual success probability, and the parameters $\alpha$ and $\beta$ of our initial _prior_ or initial guess on the distribution, which is a $Beta(\alpha,\beta)$.
+In the example below, we show the updating process of the distribution of the success probablity of the coin. The parameters on the right represent the actual success probability, and the parameters $\alpha$ and $\beta$ of our initial _prior_ or initial guess on the distribution, which is a $Beta(\alpha,\beta)$.
 
 <div id="observablehq-b6737eed">
   <div class="observablehq-Q"></div>
@@ -20,6 +20,7 @@ In the example below, we show the updating process of the distribution of the su
   });
 </script>
 
+\n
 
 View the full Observable notebook, including the source, [here](https://observablehq.com/@sean-ohagan/coin-flip)
 
@@ -27,29 +28,29 @@ View the full Observable notebook, including the source, [here](https://observab
 
 Statistical inference is the process of drawing conclusions about the distribution of data from a sample. Commonly, the goal is to estimate the values of _parameters_ of the distribution— for example, the probability that a coin yields a result of heads.
 
-In the frequentist sense, parameters are thought of to have unknown, fixed values which we are trying estimate. The tools to accomplish this task are primarily point estimates and confidence intervals.
+In the frequentist sense, parameters are thought of to have unknown, fixed values which we are trying to estimate. The tools to accomplish this task are primarily point estimates and confidence intervals.
 
-In Bayesian statistics, parameters are instead viewed as random variables, having probability distributions on their values. Instead of estimating the value of the parameter, we estimate instead the probability distribution on them. We can perform similar inference to the frequentist setting by considering the _maximum a posteriori_ estimate or by constructing *credible intervals*, but by having a distribution on the parameters we retain more information about the confidence in our estimates.
+In Bayesian statistics, parameters are instead viewed as random variables, having probability distributions on their values. Instead of estimating the value of the parameter, the goal is instead to determine its probability distribution. We can perform similar inference to the frequentist setting by considering the _maximum a posteriori_ estimate or by constructing *credible intervals*, but by having a distribution on the parameters we retain more information about the confidence in our estimates.
 
 ## Bayes' Theorem
 
 Bayesian statistics relies on Bayes theorem, a fundamental result regarding conditional probability. For events $A$, $B$, we have
-$$P(A|B)=\frac{P(B|A)P(A)}{P(B)}$$
+$$P(A|B)=\frac{P(B|A)P(A)}{P(B)}$$.
 
 In inference problems, we often let $\theta$ denote the parameter(s) in question, and $y$ denote the data that we observed. We may then apply Bayes' theorem:
 
-$$P(\theta\|y) = \frac{P(y\|\theta)P(\theta)}{P(y)}$$
+$$P(theta|y) = \frac{P(y|theta)P(\theta)}{P(y)}$$
 
-- $P(\theta\|y)$ is called the *posterior distribution*-- this is what we are trying to calculate, as it will give us a distribution on $\theta$.
+- $P(\theta\|y)$ is called the *posterior distribution*-- the resulting probability distribution on the parameter $\theta$ given that we have observed that data $y$
 - $P(\theta)$ is our *prior distribution*-- this quantifies our previous beliefs on $\theta$. A uniform prior would represent no prior knowledge.
 - $P(y\|\theta)$ is our *likelihood* function-- this represents how likely we are to obtain the observed data given a value of $\theta$
-- $P(y)$ represents a normalization factor
+- $P(y)$ represents a normalization factor-- the essence of Bayes' theorem is really that the numerator is the posterior _is proportional to_ the product of the prior and the likelihood. Dividing by $P(y)$ is equivalent to normalizing the posterior.
 
 ## Inference
 
-The process of inference in a Bayesian setting is the process of calculating a posterior distribution on $\theta$ given the observed data $y$ and a given prior (often uniform in practice, or an educated guess). DeFinetti's theorem guarantees that the same posterior distribution will be reached independent of how many times the updating procedure is done and the order by which it is done ~ADD more here later~
+The process of inference in a Bayesian setting is the process of calculating (or approximating) a posterior distribution on $\theta$ given the observed data $y$ and a given prior (often uniform in practice, or an educated guess). Given an exchangable set of data, DeFinetti's theorem guarantees that the same posterior distribution will be reached independently how many times we 'update' the posterior, and the order relative to the data by which we 'update' it. As an example, this means if we flip a coin repeatedly and update the posterior each time, we will obtain the same result as if we updated the posterior once after many flips (provided the set of flips is the same).
 
-The maximum a posteriori, or MAP estimate, is a point estimate for a parameter obtained by taking the mode of the posterior distribution. This can be viewed as the Bayesian equivalent of the maximum likelihood estimate (MLE), and is equivalent in the case when a uniform prior is used.
+The maximum a posteriori, or MAP estimate, is a point estimate for a parameter obtained by taking the mode of the posterior distribution, sometimes written as $\text{arg max} P(\theta|y)$. This can be viewed as the Bayesian equivalent of the maximum likelihood estimate (MLE), and is equivalent in the case when the initial prior used is uniform.
 
 Credible intervals are the Bayesian counterpart to confidence intervals. The two sided credible interval at the $\alpha$ significance level contains $1-\alpha$ of the probability mass of the posterior distribution, and is weighted such that $\frac{\alpha}{2}$ is left in the tail on each side.
 
@@ -67,7 +68,7 @@ For example, consider a beta prior and a binomial likelihood function. Observe
 
 $$\frac{\binom{n}{x}\theta^x(1-\theta)^{n-x} \frac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}\theta^{\alpha-1}(1-\theta)^{\beta-1}}{\int_0^1\binom{n}{x}\theta^x(1-\theta)^{n-x}\frac{\Gamma(\alpha+\beta)}{\Gamma(\alpha)\Gamma(\beta)}\theta^{\alpha-1}(1-\theta)^{\beta-1}\,d\theta}$$
 
-(Incomplete)
+
 
 
 ### Sampling
