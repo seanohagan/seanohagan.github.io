@@ -20,7 +20,7 @@ In the example below, we show the updating process of the distribution of the su
   });
 </script>
 
-
+\\\\
 
 View the full Observable notebook, including the source, [here](https://observablehq.com/@sean-ohagan/coin-flip)
 
