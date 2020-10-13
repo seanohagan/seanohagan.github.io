@@ -50,7 +50,7 @@ $$P(\theta|y) = \frac{P(y|\theta)P(\theta)}{P(y)}$$
 
 The process of inference in a Bayesian setting is the process of calculating (or approximating) a posterior distribution on $\theta$ given the observed data $y$ and a given prior (often uniform in practice, or an educated guess). Given an exchangable set of data, DeFinetti's theorem guarantees that the same posterior distribution will be reached independently how many times we 'update' the posterior, and the order relative to the data by which we 'update' it. As an example, this means if we flip a coin repeatedly and update the posterior each time, we will obtain the same result as if we updated the posterior once after many flips (provided the set of flips is the same).
 
-The maximum a posteriori, or MAP estimate, is a point estimate for a parameter obtained by taking the mode of the posterior distribution, sometimes written as $\text{arg max} P(\theta\lvert y)$. This can be viewed as the Bayesian equivalent of the maximum likelihood estimate (MLE), and is equivalent in the case when the initial prior used is uniform.
+The maximum a posteriori, or MAP estimate, is a point estimate for a parameter obtained by taking the mode of the posterior distribution, sometimes written as $\text{arg max } P(\theta\lvert y)$. This can be viewed as the Bayesian equivalent of the maximum likelihood estimate (MLE), and is equivalent in the case when the initial prior used is uniform.
 
 Credible intervals are the Bayesian counterpart to confidence intervals. The two sided credible interval at the $\alpha$ significance level contains $1-\alpha$ of the probability mass of the posterior distribution, and is weighted such that $\frac{\alpha}{2}$ is left in the tail on each side.
 
@@ -69,11 +69,15 @@ For example, consider a beta prior and a binomial likelihood function. Observe
 $$
 \begin{align*}
 P(\theta\lvert y) &= \frac{\binom{n}{y}\theta^y(1-\theta)^{n-y} \frac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}\theta^{\alpha-1}(1-\theta)^{\beta-1}}{\int_0^1\binom{n}{y}\theta^y(1-\theta)^{n-y}\frac{\Gamma(\alpha+\beta)}{\Gamma(\alpha)\Gamma(\beta)}\theta^{\alpha-1}(1-\theta)^{\beta-1}\,d\theta} \\\\
-&= \frac{\theta^y+\alpha-1 (1-\theta)^{n+\beta-y-y}}{\int_0^1\theta^y+\alpha-1 (1-\theta)^{n+\beta-y-y} } \\\\
+&= \frac{\theta^{y+\alpha-1} (1-\theta)^{n+\beta-y-y}}{\int_0^1\theta^{y+\alpha-1} (1-\theta)^{n+\beta-y-y} } \\\\
 &= \frac{\Gamma(\alpha+\beta)}{\Gamma(\alpha)\Gamma(\beta)}\Big(\theta^{\alpha+y-1}(1-\theta)^{\beta+n-y-1}\Big) \\\\
 &= \text{Beta}(\alpha+y,\beta+n-y)
 \end{align*}
 $$
+
+with the simplification in the third equality coming from the fact that the denominator is the integral of a $\text{Beta}(\alpha+y,\beta+n-y)$ distribution without its normalizing coefficient, which will evaluates exactly to the reciprocal of said coefficient.
+
+Taking advantage of conjugate priors allows certain problems to become tractable, provided we use the correct priors.
 
 
 
@@ -85,4 +89,9 @@ In essence, the goal is to create a Markov chain with an equilibrium distributio
 
 A natural question at this point remains: how do we construct such a Markov chain?
 
-While there are many methods of doing this, the most classical one is the Metropolis-Hastings algorithm
+This is beyond the scope of this post, but stay tuned for an upcoming post on sampling methods, MCMC methods, and the Metropolis-Hastings algorithm.
+
+
+## Takeaway
+
+The main things to takeaway is that the Bayesian methodology gives us a new perspective-- parameters are expressed as random variables, with their own probability distributions, and 'beliefs' (in the form of priors) are now probabilistically quantified (which has been a historical controversy). 
