@@ -12,4 +12,6 @@ I'm a senior undergraduate student at the University of Connecticut studying mat
 
 I am broadly interested in probability, statistics, and analysis. 
 
+I have recently began a blog a will irregularly update it with some material. Other areas of site in progress.
+
 In my free time, I enjoy spending time with friends and family, snowboarding, exercise, and puzzles.
