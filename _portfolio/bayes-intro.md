@@ -67,12 +67,12 @@ The posterior distribution is proportional to the product of the prior and the l
 For example, consider a beta prior and a binomial likelihood function. Observe
 
 $$
-\begin{align}
+\begin{align*}
 P(\theta\lvert y) &= \frac{\binom{n}{y}\theta^y(1-\theta)^{n-y} \frac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}\theta^{\alpha-1}(1-\theta)^{\beta-1}}{\int_0^1\binom{n}{y}\theta^y(1-\theta)^{n-y}\frac{\Gamma(\alpha+\beta)}{\Gamma(\alpha)\Gamma(\beta)}\theta^{\alpha-1}(1-\theta)^{\beta-1}\,d\theta} \\\\
 &= \frac{\theta^y+\alpha-1 (1-\theta)^{n+\beta-y-y}}{\int_0^1\theta^y+\alpha-1 (1-\theta)^{n+\beta-y-y} } \\\\
 &= \frac{\Gamma(\alpha+\beta)}{\Gamma(\alpha)\Gamma(\beta)}\Big(\theta^{\alpha+y-1}(1-\theta)^{\beta+n-y-1}\Big) \\\\
 &= \text{Beta}(\alpha+y,\beta+n-y)
-\end{align}
+\end{align*}
 $$
 
 
