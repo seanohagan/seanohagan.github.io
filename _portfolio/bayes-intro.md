@@ -20,7 +20,7 @@ In the example below, we show the updating process of the distribution of the su
   });
 </script>
 
-\n
+
 
 View the full Observable notebook, including the source, [here](https://observablehq.com/@sean-ohagan/coin-flip)
 
@@ -39,7 +39,7 @@ $$P(A|B)=\frac{P(B|A)P(A)}{P(B)}$$.
 
 In inference problems, we often let $\theta$ denote the parameter(s) in question, and $y$ denote the data that we observed. We may then apply Bayes' theorem:
 
-$$P(theta|y) = \frac{P(y|theta)P(\theta)}{P(y)}$$
+$$P(\theta|y) = \frac{P(y|\theta)P(\theta)}{P(y)}$$
 
 - $P(\theta\|y)$ is called the *posterior distribution*-- the resulting probability distribution on the parameter $\theta$ given that we have observed that data $y$
 - $P(\theta)$ is our *prior distribution*-- this quantifies our previous beliefs on $\theta$. A uniform prior would represent no prior knowledge.
@@ -50,7 +50,7 @@ $$P(theta|y) = \frac{P(y|theta)P(\theta)}{P(y)}$$
 
 The process of inference in a Bayesian setting is the process of calculating (or approximating) a posterior distribution on $\theta$ given the observed data $y$ and a given prior (often uniform in practice, or an educated guess). Given an exchangable set of data, DeFinetti's theorem guarantees that the same posterior distribution will be reached independently how many times we 'update' the posterior, and the order relative to the data by which we 'update' it. As an example, this means if we flip a coin repeatedly and update the posterior each time, we will obtain the same result as if we updated the posterior once after many flips (provided the set of flips is the same).
 
-The maximum a posteriori, or MAP estimate, is a point estimate for a parameter obtained by taking the mode of the posterior distribution, sometimes written as $\text{arg max} P(\theta|y)$. This can be viewed as the Bayesian equivalent of the maximum likelihood estimate (MLE), and is equivalent in the case when the initial prior used is uniform.
+The maximum a posteriori, or MAP estimate, is a point estimate for a parameter obtained by taking the mode of the posterior distribution, sometimes written as $\text{arg max} P(\theta\lvert y)$. This can be viewed as the Bayesian equivalent of the maximum likelihood estimate (MLE), and is equivalent in the case when the initial prior used is uniform.
 
 Credible intervals are the Bayesian counterpart to confidence intervals. The two sided credible interval at the $\alpha$ significance level contains $1-\alpha$ of the probability mass of the posterior distribution, and is weighted such that $\frac{\alpha}{2}$ is left in the tail on each side.
 
