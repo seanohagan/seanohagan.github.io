@@ -5,7 +5,7 @@ collection: portfolio
 ---
 
 
-Say we are given a coin with an unknown success probability $\hat{p}$. Instead of viewing $\hat{p}$ as a fixed, unknown value, we instead treat it as a random variable, with its own distribution. As we flip the coin, we can update our previous belief of the distribution with the new information from the subsequent coin flips to obtain a new proposed distribution.
+Say we are given a coin with an unknown success probability $p$. Instead of viewing $p$ as a fixed, unknown value, we instead treat it as a random variable, with its own distribution. As we flip the coin, we can update our previous belief of the distribution with the new information from the subsequent coin flips to obtain a new proposed distribution.
 
 In the example below, we show the updating process of the distribution of the success probablity of the coin. The parameters on the right represent the actual success probability, and the parameters $\alpha$ and $\beta$ of our initial _prior_ or initial guess on the distribution, which is a $Beta(\alpha,\beta)$.
 
