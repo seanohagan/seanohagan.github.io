@@ -1,6 +1,6 @@
 ---
 title: "Polya's Urn Processes"
-excerpt: "Description and visualizations of some facts regarding Polya's urn processes<br/><img src='/images/thumb_bayes.png'>"
+excerpt: "Description and visualizations of some facts regarding Polya's urn processes<br/><img src='/images/polya.png'>"
 collection: portfolio
 ---
 
@@ -8,11 +8,9 @@ collection: portfolio
 
 First, we describe the __Dirichlet distribution__. This distribution is essentially a multivariate extension of the Beta distribution. Parametrized by a vector $\alpha\in\mathbb{R}^k$, $\alpha_i>0$, $i=1,2,\ldots,k$, $\text{Dirichlet }(\alpha)$ is probability measure supported on the $k-1$ _simplex_ S_{k-1}, defined by 
 
-$$S_{k-1}=\{(x_1,\ldots,x_k)\in [0,1]^k: \sum_{i=1}^k x_i = 1\}\,.$$
+$$S_{k-1}=\Bigg\{(x_1,\ldots,x_k)\in [0,1]^k: \sum_{i=1}^k x_i = 1\Bigg\}\,.$$
 
-Examples of common simplices:
-
-
+For some geometric intuition, we can think of a $1$-simplex as a line segment, a $2$-simplex as an equilateral triangle, and a $3$-simplex as a regular tetrahedron.
 
 Similarly to how the Beta distribution works nicely with a binomial data generating process, the Dirichlet distribution works the same way with a multinomial data generating process. We can visualize the interaction between these distributions below: given a multinomial data generating process with the given probabilities $\alpha$, use the buttons to draw samples and update the distribution of the estimator $\hat{\alpha}$.
 
