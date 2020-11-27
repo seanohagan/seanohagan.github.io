@@ -6,7 +6,7 @@ collection: portfolio
 
 ## The Dirichlet Distribution
 
-First, we describe the __Dirichlet distribution__. This distribution is essentially a multivariate extension of the Beta distribution. Parametrized by a vector $\alpha\in\mathbb{R}^k$, $\alpha_i>0$, $i=1,2,\ldots,k$, $\text{Dirichlet }(\alpha)$ is probability measure supported on the $k-1$ _simplex_ S_{k-1}, defined by 
+First, we describe the __Dirichlet distribution__. This distribution is essentially a multivariate extension of the Beta distribution. Parametrized by a vector $\alpha\in\mathbb{R}^k$, $\alpha_i>0$, $i=1,2,\ldots,k$, $\text{Dirichlet }(\alpha)$ is probability measure supported on the $k-1$ _simplex_ $S_{k-1}$, defined by 
 
 $$S_{k-1}=\Bigg\{(x_1,\ldots,x_k)\in [0,1]^k: \sum_{i=1}^k x_i = 1\Bigg\}\,.$$
 
