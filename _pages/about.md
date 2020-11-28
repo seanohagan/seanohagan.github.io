@@ -12,6 +12,6 @@ I'm a senior undergraduate student at the University of Connecticut studying mat
 
 I am broadly interested in probability, mathematical statistics, Bayesian statistics, and anything numerical, computational, or probabilistic.
 
-Check out my blog to see some nice visualizations.
+Check out my [Visual Blog](/blog/) to see some nice visualizations.
 
 In my free time, I enjoy spending time with friends, exercise, snowboarding, and puzzles (like the Rubik's cube).
