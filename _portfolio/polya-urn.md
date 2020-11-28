@@ -1,6 +1,6 @@
 ---
 title: "Polya's Urn Processes"
-excerpt: "Description and visualizations of some facts regarding Polya's urn processes<br/><img src='/images/polya.png'>"
+excerpt: "Description and visualizations of some facts regarding Polya's urn processes<br/><img src='/images/thumb_polya.png'>"
 collection: portfolio
 ---
 
