@@ -10,5 +10,5 @@ main:
   - title: "CV"
     url: /cv/
     
-  - title: "Coursework"
-    url: /coursework/
+#  - title: "Coursework"
+#    url: /coursework/
