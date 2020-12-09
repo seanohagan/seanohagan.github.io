@@ -10,8 +10,8 @@ redirect_from:
 
 I'm a senior undergraduate student at the University of Connecticut studying mathematics and statistics.
 
-I am broadly interested in probability, mathematical statistics, Bayesian statistics, and anything numerical, computational, or probabilistic.
+I am broadly interested in probability, mathematical statistics, Bayesian nonparametrics, and computational statistics.
 
-Check out my [Visual Blog](/blog/) to see some nice expository visualizations that I'm currently working on. For example, [Polya's Urn Processes](/portfolio/polya-urn).
+Check out my [Visual Blog](/blog/) to see some nice expository visualizations that I'm currently working on. For example, [Polya Urn Processes](/portfolio/polya-urn).
 
 In my free time, I enjoy spending time with friends, exercise, snowboarding, and puzzles (like the Rubik's cube).
