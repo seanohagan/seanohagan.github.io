@@ -10,7 +10,7 @@ locale                   : "en-US"
 title                    : "Sean O'Hagan"
 title_separator          : "-"
 name                     : &name "Sean O'Hagan"
-description              : &description "Undergraduate student"
+description              : &description "Graduate student"
 url                      : https://seanohagan.com # the base hostname & protocol for your site e.g. "https://mmistakes.github.io"
 baseurl                  : "" # the subpath of your site, e.g. "/blog"
 repository               : "seanohagan/seanohagan.github.io"
@@ -82,8 +82,8 @@ analytics:
 author:
   name             : "Sean O'Hagan"
   avatar           : "profile.png"
-  bio              : "Undergraduate student"
-  location         : "University of Connecticut"
+  bio              : "Graduate student"
+  location         : "University of Chicago"
   employer         :
   pubmed           : 
   googlescholar    : 
