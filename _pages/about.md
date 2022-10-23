@@ -8,8 +8,8 @@ redirect_from:
   - /about.html
 ---
 
-I'm a PhD student in the Statistics department at the University of Chicago.
+I'm a second year PhD student in the Statistics department at the University of Chicago.
 
-I am broadly interested in theoretical statistics and Bayesian methods.
+I am broadly interested in Bayesian methodology and generative modeling.
 
 In my free time, I enjoy spending time with friends, exercise, or snowboarding.
