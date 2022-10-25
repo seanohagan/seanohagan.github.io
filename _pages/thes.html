@@ -1,0 +1,603 @@
+<!doctype html>
+<meta charset="utf-8">
+<script src="https://distill.pub/template.v1.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/front-matter">
+  title: "The Dirichlet Process: Visual Overview and Role in Nonparametric Bayesian Modeling"
+  description: "Description of the post"
+  authors:
+  - Sean O'Hagan
+  affiliations:
+  - University of Connecticut
+</script>
+
+<dt-article>
+  <h1>The Dirichlet Process</h1>
+  <h2>Visual Overview and Role in Nonparametric Bayesian Modeling</h2>
+  <dt-byline></dt-byline>
+
+<h2>Introduction</h2>
+<p>Learning from data is powering the modern world. In the age of big data and abundant computational resources, statistics and machine learning have become ubiquitous. Modern statistical modeling can help us accomplish a wide breadth of useful tasks, such as regression, classification, or clustering. In <em>regression</em> models, we seek to estimate the relationship between the response variable and its predictors. In <em>classification</em> models, we seek to classify data points into classes. This is typically done in a <em>supervised</em> setting, in which the model is fit using true class labels. <em>Clustering</em> seeks to partition the data into a set of classes in an <em>unsupervised</em> setting, that is, to group the data such that points in the same group have similar properties to one another, without knowing any true class labels.</p>
+<p>In this article, we discuss a class of models used for clustering called <em>Dirichlet process mixture models</em>, which allow us to cluster data according to its natural structure without the need to presuppose a quantity of clusters.</p>
+<p>Dirichlet process mixture models fall into the category of Bayesian nonparametric models. To understand this term, we examine both descriptors:</p>
+<ol>
+<li><p>A <em>Bayesian model</em> is a model in which the model parameters are thought of as random variables, and inference is performed using Bayes’ theorem: for parameters <span class="math inline">\(\theta\)</span> and observed data <span class="math inline">\(y\)</span>, we have <span class="math display">\[p(\theta|y)=\frac{p(y|\theta)p(\theta)}{p(y)}\,.
+    \label{bayesthm}\]</span> From Bayes’ theorem, we observe that the <em>posterior density</em> <span class="math inline">\(p(\theta|y)\)</span>, the density of the distribution on the parameter given the observed data, is proportional to the product of the <em>prior density</em> <span class="math inline">\(p(\theta)\)</span>, the density of the distribution of the parameter, and the likelihood <span class="math inline">\(p(y|\theta)\)</span> of the observed data having been observed.</p></li>
+<li><p>A <em>nonparametric model</em> is a model in which the number of model parameters scales with the data on which it is fit. In this sense, it can be thought of as a model in which the parameter space is infinite-dimensional rather than finite-dimesional. Note that nonparametric models still have parameters, despite the name. Examples of <em>parametric</em> models include binomial models and Gaussian models.</p></li>
+</ol>
+<p>Thus, a Bayesian nonparametric model embraces both of these descriptors– they are models in which the parameters are a random vector in an infinite dimensional space (theoretically speaking), with inference performed according to Bayes’ theorem.</p>
+<p>While this category describes a broad class of models, models commonly fit in two subcategories: regression models, which make use of Gaussian processes, and hierarchical models, which make use of the Dirichlet process.</p>
+<p>The Dirichlet process mixture model, the principal model in the latter class, will be our focus. These models fit data to a mixture of parametric component distributions with the key property that the number of components grows with the data, and is fitted to the data. This nonparametric nature allows the model to be used to cluster data in which the number of clusters is not known <em>a priori</em>, and is thought to grow with the size of the data. As one might posit, this type of model has a variety of relevant applications: galaxy localization, grouping documents by topic, and neuroimaging problems <dt-cite key="castro2016bnp"></dt-cite>.</p>
+<p>The Dirichlet process itself is a probability distribution whose realizations are discrete probabilities distributions themselves. It is used as a prior distribution on the mixing measure in Dirichlet process mixture models. First, we will provide preliminary primers on the topics of Bayesian inference and exchangeability, and then motivate and build up the theory of the Dirichlet process by first discussing limiting proportions of Polya’s urn models and the extension to the Blackwell-MacQueen urn scheme. After this, we discuss Sethuraman’s stick-breaking construction and elaborate on properties of the Dirichlet process. After this, we discuss mixture modeling and build up from the finite case to motivate the Dirichlet process as a prior in nonparametric Bayesian models. Finally, we give examples of Dirichlet process mixture models fit to some real data, discuss approximate inference for these classes of models, and future directions for the interested reader.</p>
+<br>
+<hr>
+<br>
+<h2 id="bayesian-inference">Bayesian Inference</h2>
+<p>In order to work up to hierarchical Bayesian models like the Dirichlet process mixture model, we first refer back to the basics of Bayesian inference. Model parameters are viewed as random variables rather than fixed, unknown quantities, and we seek to perform inference on these parameters through the usage of Bayes’ theorem.</p>
+<p>One of the simplest examples of Bayesian inference involves binomial data, like flipping a coin. Say we have a coin with a probability <span class="math inline">\(\theta\)</span> of yielding heads. After flipping the coin <span class="math inline">\(n\)</span> times, we can calculate the posterior distribution on <span class="math inline">\(\theta\)</span> given our observed flips. We now define the beta distribution, which will play an instrumental role in this example.</p>
+<h4>Definition.</h4>
+<p>We define the <span class="math inline">\(\textit{Beta}(\alpha,\beta)\)</span> distribution <dt-cite key="bda3"></dt-cite>, with <span class="math inline">\(\alpha&gt;0\)</span>, <span class="math inline">\(\beta&gt;0\)</span>, to have the density <span class="math display">\[p(x) = \frac{1}{\mathrm{B}(\alpha,\beta)}x^{\alpha-1}(1-x)^{\beta-1} \propto x^{\alpha-1}(1-x)^{\beta-1}
+\label{betadensity}\]</span> where <span class="math inline">\(\mathrm{B}:\mathbb{R}\times\mathbb{R}\to\mathbb{R}\)</span> denotes the beta function, defined as <span class="math display">\[\mathrm{B}(\alpha,\beta) := \int_0^1 t^{\alpha-1}(1-t)^{\beta-1}\,\mathrm{d}t = \frac{\Gamma(\alpha)\Gamma(\beta)}{\Gamma(\alpha+\beta)}\,.\]</span></p>
+<p>We will use the beta distribution as our prior distribution on <span class="math inline">\(\theta\)</span> for Bayesian inference (that is, <span class="math inline">\(\theta\sim\text{Beta}(\alpha,\beta)\)</span>). If the reader is not familiar with this problem, they may wonder why we chose to use a Beta distribution as the prior on <span class="math inline">\(\theta\)</span>. This is because for binomial data like this, a beta distribution is a <em>conjugate prior</em>. This means that the posterior on <span class="math inline">\(\theta\)</span> given some observed data will be in the same parametric family as the prior, so in this case, the posterior will always be a beta distribution as well, with different parameters. To see this, suppose we observe <span class="math inline">\(y\)</span> heads flips out of <span class="math inline">\(n\)</span> total flips, and our prior on <span class="math inline">\(\theta\)</span> is a <span class="math inline">\(\text{Beta}(\alpha,\beta)\)</span>. Then we have <span class="math display">\[\begin{aligned}
+p(\theta\lvert y) &amp;= \frac{p(\theta)p(y|\theta)}{p(y)} \\[1em]
+&amp;= \frac{p(\theta)p(y|\theta)}{\int_0^1 p(\theta)p(y|\theta)\,\mathrm{d}\theta} \\[1em]
+&amp;=\frac{\binom{n}{y}\theta^y(1-\theta)^{n-y} \frac{\Gamma(\alpha + \beta)}{\Gamma(\alpha)\Gamma(\beta)}\theta^{\alpha-1}(1-\theta)^{\beta-1}}{\int_0^1\binom{n}{y}\theta^y(1-\theta)^{n-y}\frac{\Gamma(\alpha+\beta)}{\Gamma(\alpha)\Gamma(\beta)}\theta^{\alpha-1}(1-\theta)^{\beta-1}\,\mathrm{d}\theta} \\[1em]
+&amp;= \frac{\theta^{y+\alpha-1} (1-\theta)^{n+\beta-y-y}}{\int_0^1\theta^{y+\alpha-1} (1-\theta)^{n+\beta-y-y} } \\[1em]
+&amp;= \frac{\Gamma(\alpha+\beta)}{\Gamma(\alpha)\Gamma(\beta)}\,\theta^{\alpha+y-1}(1-\theta)^{\beta+n-y-1}
+\label{betabinomialconj}\end{aligned}\]</span> which is exactly the density of a <span class="math inline">\(\text{Beta}(\alpha+y,\beta+n-y)\)</span> random variable . In this example, we see that we can obtain the posterior simply by incrementing the first parameter <span class="math inline">\(\alpha\)</span> by the number of successes (heads) observed and the second parameter <span class="math inline">\(\beta\)</span> by the number of failures (tails) observed.</p>
+<p>To see this in action, observe the visualization below. This shows the <span class="math inline">\(\text{Beta}(\alpha,\beta)\)</span> prior distribution on <span class="math inline">\(\theta\)</span>, and updates itself to the posterior distribution on <span class="math inline">\(\theta\)</span> given the observed data with each flip of the coin. To reset it, simply change the true success probability or a parameter of the prior.</p>
+
+<div id="observablehq-49c1c714">
+    <div class="observablehq-Q"></div>
+  </div>
+  <script type="module">
+    import {Runtime, Inspector} from "https://cdn.jsdelivr.net/npm/@observablehq/runtime@4/dist/runtime.js";
+    import define from "https://api.observablehq.com/@sean-ohagan/coin-flip.js?v=3";
+    (new Runtime).module(define, name => {
+      if (name === "Q") return Inspector.into("#observablehq-49c1c714 .observablehq-Q")();
+    });
+  </script>
+
+<p>As we see, after flipping the coin more and more, the mass of the posterior density concentrates around the true success probability. Notice that obtaining enough data can correct a poorly chosen prior on <span class="math inline">\(\theta\)</span>, but a sharper prior requires more data to change as it describes a higher confidence around a certain value.</p>
+<p>With the previous example in mind, we can consider the multinomial version of the same problem. For example, we might have a <span class="math inline">\(k\)</span>-sided die, and we wish to perform inference on <span class="math inline">\(\theta\in S_{k-1}:=\{x\in\mathbb{R}^k:\sum_{i=1}^k=1\}\)</span>, the vector of probabilities of the die landing on each face. We now define the Dirichlet distribution, which is essentially a multivariate extension of the beta distribution.</p>
+<h4>Definition.</h4>
+<p>We define the <span class="math inline">\(\text{Dirichlet}(\alpha)\)</span> distribution <dt-cite key="bda3"></dt-cite>, <span class="math inline">\(\alpha=(\alpha_1,\ldots,\alpha_k)\)</span>, <span class="math inline">\(\alpha_i&gt;0\)</span>, <span class="math inline">\(i=1,\ldots,k\)</span> to have density <span class="math display">\[p(x) = \frac{\Gamma\left(\sum_{i=1}^k \alpha_i\right)}{\prod_{i=1}^k\Gamma(\alpha_i)}\prod_{i=1}^k x_i^{\alpha_i-1}\propto \prod_{i=1}^k x_i^{\alpha_i-1}\,.\]</span></p>
+<p>Following the previous problem, we can do inference in the same manner, with the Dirichlet distribution being the conjugate prior for multinomial data. Explicitly, consider a <span class="math inline">\(\text{Dirichlet}(\alpha)\)</span> prior on <span class="math inline">\(\theta\)</span>, where <span class="math inline">\(\alpha=(\alpha_1,\ldots,\alpha_k)\)</span>. After observing a number of rolls of the die, we let <span class="math inline">\(y_i\)</span> be the number of observed rolls of face <span class="math inline">\(i\)</span>, for <span class="math inline">\(i=1,\ldots,k\)</span>. Then the posterior on <span class="math inline">\(\theta\)</span> given our observed data follows a <span class="math inline">\(\text{Dirichlet}(\alpha_1+y_1,\ldots,\alpha_k+y_k)\)</span>. It can be viewed exactly as a multivariate extension of the beta-binomial problem. We see an example below, which would correspond to a three sided die with color coded faces.</p>
+
+<div id="observablehq-284880d8">
+    <div class="observablehq-display"></div>
+  </div>
+  <script type="module">
+    import {Runtime, Inspector} from "https://cdn.jsdelivr.net/npm/@observablehq/runtime@4/dist/runtime.js";
+    import define from "https://api.observablehq.com/@sean-ohagan/multinomial-dirichlet-inference.js?v=3";
+    (new Runtime).module(define, name => {
+      if (name === "display") return Inspector.into("#observablehq-284880d8 .observablehq-display")();
+    });
+  </script>
+
+<br>
+<hr>
+<br>
+
+<h2 id="exchangeability">Exchangeability</h2>
+<p>Before building up to the Dirichlet process through Polya’s urn, we will discuss a property of data called exchangeability and an important result which will be instrumental in establishing the existence of the Dirichlet process.</p>
+<p>The reader is likely to be familiar with the concept of <em>independence</em>.</p>
+<h4>Definition.</h4>
+<ol>
+<li><p>Two events <span class="math inline">\(A\)</span> and <span class="math inline">\(B\)</span> (measurable subsets of the sample space) are independent if and only if <span class="math display">\[P(A\cap B)=P(A)P(B)\,.\]</span></p></li>
+<li><p>This notion can be extended to collections of sets by saying the collections <span class="math inline">\(\mathcal{F}_1,\mathcal{F}_2\)</span> are independent if for every <span class="math inline">\(E_1\in\mathcal{F}_1\)</span>, <span class="math inline">\(E_2\in\mathcal{F}_2\)</span>, <span class="math inline">\(E_1\)</span> and <span class="math inline">\(E_2\)</span> are independent.</p></li>
+<li><p>Finally, two random variables <span class="math inline">\(X,Y\)</span> are independent if the <span class="math inline">\(\sigma\)</span>-algebras generated by them, <span class="math inline">\(\sigma(X)\)</span> and <span class="math inline">\(\sigma(Y)\)</span>, are independent.</p></li>
+</ol>
+<p>We can give a more intuitive characterization as well: real-valued random variables <span class="math inline">\(X,Y\)</span> are independent if and only if their joint cumulative distribution function (CDF) equals the product of their marginal CDFs, <span class="math display">\[F_{X,Y}(t,s)=F_X(t)F_Y(s)\]</span> for all <span class="math inline">\(t,s\)</span> in the respective sample spaces. If both <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span> have a density, we can also characterize independence using them in a similar way <span class="math display">\[p_{X,Y}(t,s)=p_X(t)p_Y(s)\]</span> for all <span class="math inline">\(t,s\)</span> in the respective sample spaces.</p>
+<p>Instead of independence, we are interested in the weaker condition of <em>exchangeability</em>, which is another property of finite or countable sets of random variables.</p>
+<h4>Definition.</h4>
+<p>The random variables <span class="math inline">\(X_1,\ldots,X_n\)</span> are <em>exchangeable</em> if and only if for any permutation <span class="math inline">\(\sigma\in S_n\)</span> (the symmetric group on <span class="math inline">\(n\)</span> elements), the joint distribution of <span class="math inline">\(X_{\sigma(1)},\ldots,X_{\sigma(n)}\)</span> is the same as the joint distribution of <span class="math inline">\(X_1,\ldots,X_n\)</span>. A countable sequence of random variables <span class="math inline">\(\{X_n:n\in\mathbb{N}\}\)</span> is exchangeable if the joint distribution is the same under any finite permutation of the indices. Equivalently, we may also say that if is exchangeable if <span class="math inline">\(X_1,\ldots,X_k\)</span> is exchangeable for every <span class="math inline">\(k\in\mathbb{N}\)</span>.</p>
+<p>It is important to note that while independence implies exchangeability, the converse does not hold– we will see an example of this soon!</p>
+
+<h3 id="definettis-representation-theorem">DeFinetti’s representation theorem</h3>
+<p>The reason why we are discussing exchangeable random variables is due to a characterization by Bruno De Finetti <dt-cite key="definetti1937"></dt-cite></span> <dt-cite key="definetti1974"></dt-cite>. This theorem has many forms, some more general than others. We begin with O’Neill’s formulation of the representation theorem <dt-cite key="oneal"></dt-cite> and then restrict it to the case of <span class="math inline">\(\{0,1\}\)</span>-valued random variables, such as Bernoulli random variables or indicator random variables.</p>
+<h4>Theorem.</h4>
+<p>Let <span class="math inline">\(\{X_n:n\in\mathbb{N}\}\)</span> be a sequence of random variables. The sequence <span class="math inline">\(\{X_n:n\in\mathbb{N}\}\)</span> is exchangeable if and only if for any <span class="math inline">\(n\in\mathbb{N}\)</span>, <span class="math display">\[F(X_1,\ldots,X_n) = \int \prod_{i=1}^n F_X(X_i)\,\mathrm{d}P(F_X)\,.\]</span> where <span class="math inline">\(F_X\)</span> is the limiting empirical distribution defined as <span class="math display">\[F_X(t) = \lim_{k\to\infty} \frac{1}{k}\sum_{i=1}^k \mathbb{I}_{\{x_i \leq t\}}\]</span> when this limit exists. If <span class="math inline">\(F_X\)</span> is indexed by a parameter <span class="math inline">\(\theta\)</span>, and has a density, we also have <span class="math display">\[P(X_1=x_1,\ldots,X_n=x_n) = \int \prod_{i=1}^n p(x_i|\theta)\,\mathrm{d}F(\theta)\,.\]</span> Intuitively, this means that exchangeable random variables are independent and identically distributed, conditioned on their limiting empirical distribution.</p>
+<p>A proof in this general form is available in the appendix of O’Neill (2009) <dt-cite key="oneal"></dt-cite>. Now, for a more concrete result that will suit our uses, we restrict O’Neill’s formulation to the case of <span class="math inline">\(\{0,1\}\)</span>-valued random variables.</p>
+<h4>Theorem.</h4>
+<p>Let <span class="math inline">\(\{X_n:n\in\mathbb{N}\}\)</span> be a sequence of <span class="math inline">\(\{0,1\}\)</span>-valued random variables. This sequence is exchangeable if and only if for any <span class="math inline">\(n\in\mathbb{N}\)</span>, <span class="math display">\[P(X_1=x_1,\ldots,X_n=x_n)=\int_0^1 \theta^y(1-\theta)^{n-y}\,\mathrm{d}F(\theta)
+\label{defin}\]</span> where <span class="math inline">\(y=\sum_{i=1}^n x_i\)</span> and <span class="math inline">\(F(\theta)\)</span> is the distribution function of the limiting empirical distribution, defined as <span class="math display">\[F(\theta) := P(\overline{X}_\infty\leq \theta)\]</span> for <span class="math display">\[\overline{X}_\infty := \lim_{k\to\infty} \frac{1}{k}\sum_{i=1}^k X_i\]</span> when this limit exists.</p>
+<p>Now, we will switch gears to discuss a model known as Polya’s urn, which will not only provide us with a nontrivial example of exchangeable random variables (that is, an example in which they are exchangeable but not independent), but also serve as a vehicle towards understanding the Dirichlet process.</p>
+
+<br>
+<hr>
+<br>
+
+<h2 id="polyas-urn-processes">Polya’s Urn Processes</h2>
+<p>Suppose an urn contains two colors of balls. When considering finite or infinite sampling from the urn, it is typical to consider sampling with replacement and sampling without replacement. Under these conditions, the number of balls drawn of a certain class follows a binomial or hypergeometric distribution respectively. In the simple Polya’s urn model, we consider a third option– sampling with replacement and the addition of another object of the same class into the model. This type of process operates in a ‘rich get richer’ fashion, as drawing objects from one class makes this class more likely to be drawn in the future.</p>
+<p>There exist many generalizations of this model– cases with any finite number of classes, countably many classes, as well as generalizations in which any integer number of balls are added/removed from the urn at each draw. For our purposes, we consider the process where just one additional ball is added at each draw.</p>
+<p>Let’s see what draws from a Polya’s urn process look like. Considering an urn with three colors of balls, set the initial quantities in the urn and use the buttons to draw samples from the urn. Change the initial conditions to reset the demonstration.</p>
+
+<div id="observablehq-a8cdf068">
+    <div class="observablehq-display"></div>
+  </div>
+  <script type="module">
+    import {Runtime, Inspector} from "https://cdn.jsdelivr.net/npm/@observablehq/runtime@4/dist/runtime.js";
+    import define from "https://api.observablehq.com/@sean-ohagan/polyas-urn.js?v=3";
+    (new Runtime).module(define, name => {
+      if (name === "display") return Inspector.into("#observablehq-a8cdf068 .observablehq-display")();
+    });
+  </script>
+
+<p>This model acts as a stepping stone between familiar material and the Dirichlet process. In order to understand this transition, we will study some of the properties of Polya’s urn. Primarily, this provides an excellent example of exchangeable random variables. To gain a better understand of the model, we will discuss an urn with just two colors of balls, initially containing <span class="math inline">\(a\)</span> black and <span class="math inline">\(b\)</span> white balls. As we move forward, we will extend the results from this case first to the case with finitely many colors, and then to include an unbounded quantity of colors, which will give rise to the Dirichlet process.</p>
+<p>Let <span class="math inline">\(X_1,\ldots, X_n\)</span> be defined such that <span class="math inline">\(X_k\)</span> is the indicator random variables for the event of the <span class="math inline">\(k\)</span>th draw being a black ball. That is, <span class="math display">\[X_k=\begin{cases}1 &amp; \text{the $k$th draw is a black ball}\\0 &amp; \text{the $k$th draw is a white ball}\end{cases}
+\label{polyaindicatordef}\]</span> Observe that <span class="math inline">\(X_1,\ldots,X_n\)</span> are not independent as each <span class="math inline">\(X_k\)</span> depends on <span class="math inline">\(\{X_j:j=1,\ldots,k-1\}\)</span>, since the probability of drawing a black ball at time <span class="math inline">\(k\)</span> depends on the balls drawn at every previous time step. For example, if we begin with one black and one white ball, and draw a black ball on the first draw, the second draw will be a black ball with probability <span class="math inline">\(\frac{2}{3}\)</span>. However, if we drew a white ball on the first draw, the probability of drawing black on the second would be only <span class="math inline">\(\frac{1}{3}\)</span>.</p>
+<p><span class="math inline">\(X_1,\ldots,X_n\)</span>, the random variables corresponding to draws from the urn process, are exchangeable.</p>
+<div class="proof">
+<p><em>Proof.</em> Explicitly, the joint distribution of <span class="math inline">\(X_1,\ldots,X_n\)</span> is given by <span class="math display">\[\begin{aligned}
+\begin{split}
+&amp;P(X_1,\ldots,X_n=x_1,\ldots,x_n) \\
+=&amp;P(X_1=x_1)P(X_2=x_2\,|\,X_1=x_1)\cdots P(X_n=x_n\,|\,X_1,\ldots,X_{n-1}=x_1,\ldots,x_{n-1}) \\
+=&amp;\left(\frac{a}{a+b}x_1+\frac{b}{a+b}(1-x_1)\right)\cdot\left(\frac{a+x_1}{a+b+1}x_2+\frac{b+(1-x_1)}{a+b+1}(1-x_2)\right)\cdots \\ 
+&amp; \qquad\qquad\qquad\qquad\qquad\qquad\,\cdot \left(\frac{a+\sum_{i=1}^{n-1}x_i}{a+b+n-1}x_n + \frac{b+(n-1-\sum_{i=1}^{n-1}x_i)}{a+b+n-1}(1-x_{n-1})\right) \\ 
+=&amp;\frac{a(a+1)\cdots(a+\sum_{i=1}^nx_i-1)\quad\cdot\quad b(b+1)\cdots(b+(n-\sum_{i=1}^nx_i-1))}{(a+b)(a+b+1)\cdots(a+b+n)} \\
+=&amp;\frac{a^{\overline{y}} b^{\overline{n-y}}}{(a+b)^{\overline{n}}} \\
+=&amp; \frac{\Gamma(a+y)\Gamma(b+n-y)}{\Gamma(a+b+n)}\frac{\Gamma(a+b)}{\Gamma(a)\Gamma(b)} \\
+=&amp; \frac{B(a+y,b+n-y)}{B(a,b)}
+\end{split}
+\label{polyajointdist}\end{aligned}\]</span> where <span class="math inline">\(y=\sum_{i=1}^nx_i\)</span>, the number of black balls drawn in total, <span class="math inline">\(z^{\overline{m}}=z(z+1)\cdots(z+m-1)\)</span> denotes the rising factorial, <span class="math inline">\(\Gamma(\cdot)\)</span> denotes the gamma function, and <span class="math inline">\(B(\cdot,\cdot)\)</span> denotes, as before, the beta function. Thus, we see explicitly the lack of dependence on individual draws and therefore the exchangeability of the sequence. ◻</p>
+</div>
+<p>As we saw above, the quantity <span class="math display">\[\sum_{i=1}^nX_i\,,\]</span> the total number of black balls drawn after <span class="math inline">\(n\)</span> draws, is sufficient to determine the joint distribution of <span class="math inline">\(X_1,\ldots,X_n\)</span>. That is, <span class="math display">\[P\left(X_1,\ldots,X_n=x_1,\ldots,x_n\,|\,X_1,\ldots,X_n\right)=P\left(X_1,\ldots,X_n=x_1,\ldots,x_n\,\Big|\,\sum_{i=1}^nX_i\right)\,.\]</span> Intuitively, the joint distribution of <span class="math inline">\(X_1,\ldots,X_n\)</span> depends just on <span class="math inline">\(\sum_{i=1}^nX_i\)</span> rather than <span class="math inline">\(X_1,\ldots,X_n\)</span>. We note that this is actually a characterization of exchangeability for <span class="math inline">\(\{0,1\}\)</span>-valued random variables.</p>
+<h3 id="polyas-urn-convergence">Polya’s urn convergence</h3>
+<p>Using this exchangeability property of the Polya’s urn model, we seek to answer a natural question of Polya’s urn: its behavior as the number of draws from the urn gets very large. In particular, we wish to determine the limiting empirical distribution of draws of the urn, which describes exactly the limiting proportion of balls of a specific color after infinitely many draws. It turns out, thanks to exchangeability, we can apply De Finetti’s theorem to help us determine this limiting distribution. Define <span class="math display">\[\overline{X}_k := \frac{1}{k}\sum_{i=1}^k X_i\,,\]</span> and <span class="math display">\[\overline{X}_\infty=\lim_{k\to\infty}\overline{X}_k=\lim_{k\to\infty}\frac{1}{k}\sum_{i=1}^k X_i\]</span> the limiting proportion of black balls <em>that have been drawn</em>.</p>
+<ol>
+<li><p>The proportion of black balls in the urn converges in distribution to <span class="math inline">\(\text{Beta}(a,b)\)</span></p></li>
+<li><p>After conditioning on this limiting measure, draws from the urn are independent and identically Bernoulli distributed. That is, we have <span class="math display">\[P(X_1=x_1,\ldots,X_n=x_n\,|\,\overline{X}_\infty = \theta)=\theta^y(1-\theta)^{n-y}\,,\]</span> where <span class="math inline">\(y=\sum_{i=1}^n x_i\)</span>, or equivalently <span class="math display">\[P\left(\sum_{i=1}^nX_i = y\,|\,\overline{X}_\infty=\theta\right) = \binom{n}{y} \theta^y(1-\theta)^{n-y}\]</span> which can also be stated as <span class="math display">\[\sum_{i=1}^nX_i \,\Big|\,\overline{X}_\infty \sim \text{Binomial}\left(n,\overline{X}_\infty\right)\,.\]</span></p></li>
+</ol>
+<div class="proof">
+<p><em>Proof.</em> First, in order to make sure that <span class="math inline">\(\overline{X}_\infty\)</span> is well-defined, we need to ensure convergence of the sequence <span class="math inline">\(\{\overline{X}_n:n\in\mathbb{N}\}\)</span>. To do this, we examine a property of this sequence: <span class="math display">\[\begin{aligned}
+E[\overline{X}_{n+1}|\overline{X}_1,\ldots,\overline{X}_n] &amp;= 
+\left(\frac{n\overline{X}_n+1}{n+1}\right)\left(\overline{X}_n\right) + \left(\frac{n\overline{X}_n}{n+1}\right)\left(1-\overline{X}_n\right) \\
+&amp;= \frac{n\overline{X}_n^2 + \overline{X}_n + n\overline{X}_n - n\overline{X}_n^2}{n+1} \\
+&amp;= \overline{X}_n\,,\end{aligned}\]</span> so <span class="math inline">\(\{\overline{X}_n:n\in\mathbb{N}\}\)</span> is a <em>martingale</em>. If the reader is not familiar with martingales, they describe stochastic processes with the above property: their conditional expectation given all previous states is exactly equal to the most recent state. This concept was initially developed for the mathematical formalization of gambling. With this in mind, we can apply a fundamental result in martingale theory, that being Doob’s martingale convergence theorem <dt-cite key="doob1953"></dt-cite>, which tells us that <span class="math inline">\(\{\overline{X}_n:n\in\mathbb{N}\}\)</span> converges almost surely to some random variable with finite expectation.</p>
+<p>Moving forward, since each <span class="math inline">\(X_k\)</span> is <span class="math inline">\(\{0,1\}\)</span>-valued and exchangeable, as we have shown earlier, De Finetti’s theorem implies that <span class="math display">\[P(X_1=x_1,\ldots, X_n=x_n) = \int_0^1 \theta^y (1-\theta)^{n-y}\,\mathrm{d}F(\theta)\]</span> where <span class="math inline">\(y=\sum_{i=1}^n x_i\)</span> and <span class="math inline">\(F(\theta)=P(\overline{X}_\infty\leq \theta)\)</span> is the distribution function of the limiting proportion of black balls. In addition, we have an expression for the joint distribution from earlier. Equating these, we observe <span class="math display">\[\int_0^1 \theta^y (1-\theta)^{n-y}\,\mathrm{d}F(\theta)=\frac{B(a+y,b+n-y)}{B(a,b)}\,.\]</span> Using the definition of the beta function, we therefore observe <span class="math display">\[\begin{aligned}
+\int_0^1 \theta^y(1-\theta)^{n-y}\,\mathrm{d}F(\theta)&amp;=\frac{1}{B(a,b)}\int_0^1 \theta^{a+y-1}(1-\theta)^{b+n-y-1}\,\mathrm{d}\theta \\
+&amp;= \int_0^1\left(\theta^y(1-\theta)^{n-y}\right)\left(\frac{1}{B(a,b)}\theta^{a-1}(1-\theta)^{b-1}\right)\,\mathrm{d}\theta\end{aligned}\]</span> Since the quantity in parentheses on the right is continuous as a function of <span class="math inline">\(\theta\)</span>, the Riemann integral on the right is equivalent to the Riemann-Stieltjes integral on the left, where <span class="math inline">\(F(\theta)\)</span> is the antiderivative of the quantity in parentheses. Furthermore, this quantity is exactly the density of a <span class="math inline">\(\text{Beta(a,b)}\)</span> random variable, so <span class="math inline">\(F(\theta)\)</span> is the distribution function of a <span class="math inline">\(\text{Beta}(a,b)\)</span> random variable. Therefore, we have used De Finetti’s theorem to show the desired result, that <span class="math display">\[\overline{X}_\infty\sim \text{Beta}(a,b)\,.\]</span> The second claim follows directly from O’Neill’s formulation of De Finetti’s theorem. ◻</p>
+</div>
+<p>Now that we understand this result in the case of the urn with two colors of balls, we seek to generalize. If the urn has <span class="math inline">\(k\)</span> finitely many colors/classes, an analogous result will hold as well. We let <span class="math inline">\(X_n:=(X^{(1)}_n,\ldots,X^{(k)}_n)\)</span> denote the proportions of balls of each color in the urn at time <span class="math inline">\(n\)</span>. Similarly to the previous case, given a vector of initial starting quantities <span class="math inline">\(\alpha=(\alpha_1,\ldots,\alpha_k)\)</span>, we have <span class="math display">\[\lim_{n\to\infty} \frac{1}{n} \sum_{i=1}^n X_n = \overline{X}_\infty \in L^1\]</span> and <span class="math display">\[\overline{X}_\infty\sim\text{Dirichlet}(\alpha)\,.\]</span></p>
+<p>We can see an example of this in the visualization below.</p>
+
+<div id="observablehq-0684b812" class="l-page">
+    <div class="observablehq-body"></div>
+  </div>
+  <script type="module">
+    import {Runtime, Inspector} from "https://cdn.jsdelivr.net/npm/@observablehq/runtime@4/dist/runtime.js";
+    import define from "https://api.observablehq.com/@sean-ohagan/polyas-urn-sampling.js?v=3";
+    (new Runtime).module(define, name => {
+      if (name === "body") return Inspector.into("#observablehq-0684b812 .observablehq-body")();
+    });
+  </script>
+
+<p>Limiting proportions of each colors are drawn from the urn on the right, and added to the histogram on the left. As we see, the distribution of these limiting proportions converges to the Dirichlet distribution with parameter corresponding to the initial conditions.</p>
+<p>Note that we cannot truly simulate a draw of the limiting proportions, we must instead truncate the sequence at some point. However, as we see, this still provides a good approximation of the limiting proportion.</p>
+<h3 id="blackwell-macqueen-urn-scheme">Blackwell-MacQueen urn scheme</h3>
+<p>Finally, we can extend this result to once again to the case with countably many colors/classes, known as the Blackwell-MacQueen sampling scheme. Suppose the urn is now filled with <span class="math inline">\(\alpha\)</span> black balls. At each time interval, we draw a ball from the urn. If a black ball is drawn, we replace the black ball and add an additional ball of a new color. If a non-black ball is drawn, we follow the standard procedure of replacing that ball and adding an additional ball of the same color. In essence, this is an extension of the urn scheme to include an unlimited countable quantity of balls, with the parameter <span class="math inline">\(\alpha\)</span> representing the system’s affinity for creating new colors.</p>
+<p>Once again, we wish to determine the limiting behavior of this process after infinitely many draws from the urn. Similarly to Polya’s urn with finitely many colors, after infinitely many draws, this process will converge to a limiting discrete measure with probability <span class="math inline">\(1\)</span> <dt-cite key="blackwellmacqueen"></dt-cite>, with support in the infinite-dimensional simplex <span class="math display">\[S_\infty := \left\{w_n:n\in\mathbb{N},\sum_{i=1}^\infty w_n=1\right\}\]</span> We will call this limiting distribution the GEM distribution (Griffiths-Engen-McCloskey) <dt-cite key="ewens1990"></dt-cite>. Let <span class="math inline">\(X_n=(X_n^{(1)},X_n^{(2)},\ldots )\)</span>, where <span class="math inline">\(X_n^{(k})\)</span> denotes an indicator random variable for a ball of color <span class="math inline">\(k\)</span> being drawn. Then, defining the limiting distribution on the proportion of balls of each color, <span class="math display">\[\overline{X}_\infty = \lim_{k\to\infty} \frac{1}{k}X_k\]</span> we have the result <span class="math display">\[\overline{X}_\infty\sim\text{GEM}(\alpha)\,.\]</span></p>
+<p>To better understand this GEM distribution, we turn our attention to a property of the Blackwell-MacQueen urn. Since the urn begins with only <span class="math inline">\(\alpha\)</span> black balls, after the first draw, the urn will necessarily contain <span class="math inline">\(\alpha\)</span> black balls and one ball of a new color, which we call color 1. Now, considering the urn to contain balls of either color 1 or not of color 1, we can observe that it is equivalent to an urn with balls of only two colors that initially begins with 1 ball of color 1 and <span class="math inline">\(\alpha\)</span> balls of another color. Similarly, if we ignore any balls of color 1, then balls of color 2 will behave like a Polya’s urn with 1 initial ball of color 2 and <span class="math inline">\(\alpha\)</span> initial balls of another color. We can continue this to apply to balls of color <span class="math inline">\(k\)</span>, if we ignore balls of colors <span class="math inline">\(1,\ldots,k-1\)</span>.</p>
+<p>Let <span class="math inline">\(\overline{X}_\infty^{(k)}\)</span> be the limiting proportion of balls of color k in the Blackwell-MacQueen urn. Using what we know about Polya’s urn with two colors and our observation above, <span class="math display">\[\overline{X}_\infty^{(1)}\sim\text{Beta}(1,\alpha)\]</span> Now, ignoring balls of color 1, the relative limiting proportion of balls of color 2 will be <span class="math inline">\(\text{Beta}(1,\alpha)\)</span> as well. Therefore, the limiting proportion of balls of color 2 in the urn is given by <span class="math display">\[\overline{X}_\infty^{(2)}\,\Big|\,\overline{X}_\infty^{(1)}\sim \left(1-\overline{X}_\infty^{(1)}\right)\text{Beta}(1,\alpha)\,.\]</span> For arbitrary <span class="math inline">\(k\in\mathbb{N}\)</span>, we extend this to observe that <span class="math display">\[\overline{X}_\infty^{(k)}\,\Big|\,\overline{X}_\infty^{(1)},\ldots,\overline{X}_\infty^{(k-1)} \sim \left(\prod_{i=1}^{k-1}\left(1-\overline{X}_\infty^{(i)}\right)\right)\text{Beta}(1,\alpha)\,.\]</span> Looking at individual colors in the Blackwell-MacQueen urn scheme in this way provides insight on the behavior of the GEM distribution to which the limiting proportions converge. This type of perspective becomes valuable when we wish to sample from the GEM distribution, and later the Dirichlet process.</p>
+
+<br>
+<hr>
+<br>
+
+<h2 id="stick-breaking-process">Stick-Breaking Process</h2>
+<p>The previous ideas are commonly framed with the <em>stick-breaking process</em> <dt-cite key="sethuraman1994"></dt-cite>, which is a construction of the GEM distribution and Dirichlet process. It is commonly used by probabilistic programming languages to draw samples from these distributions.</p>
+<p>Suppose we have a stick of unit length. First, we draw <span class="math inline">\(\beta_1\sim\text{Beta}(1,\alpha)\)</span>, and break off this proportion of the stick. At the second time step, we take the remaining piece, draw <span class="math inline">\(\beta_2\sim\text{Beta}(1,\alpha)\)</span>, and break off this proportion. Continuing this process, we let <span class="math inline">\(w_k\)</span> denote the length of the amount of the stick broken off at time <span class="math inline">\(k\)</span>. Then <span class="math display">\[w_k = \beta_k\prod_{i=1}^{k-1}\left(1-\beta_i\right)\,.\]</span> Through our observations about the Blackwell-MacQueen urn scheme earlier, we see that the stochastic process given by the sequence of weights <span class="math inline">\(\{w_n:n\in\mathbb{N}\}\)</span> follows the GEM distribution with parameter <span class="math inline">\(\alpha\)</span>. As <span class="math inline">\(\alpha\)</span> grows larger, the distribution <span class="math inline">\(\text{Beta}(1,\alpha)\)</span> favors lower values, which favors a lower, more spread out set of weights, corresponding to a stick broken into more relatively even pieces. This is exactly analogous to how larger <span class="math inline">\(\alpha\)</span> favors the addition of new colors of balls in the Blackwell-MacQueen urn scheme.</p>
+
+<br>
+<hr>
+<br>
+
+<h2 id="restaurant-seating-process">Restaurant Seating Process</h2>
+<p>Another very related process is the <em>restaurant seating process</em>. Suppose a restaurant exists with an unlimited quantity of tables. The first customer sits at a table, and each subsequent customer chooses to sit at either an already populated table or a new table, favoring tables in proportion to the amount of people already there. The restaurant seating process is mathematically defined as a stochastic process <span class="math inline">\(\{X_n:n\in\mathbb{N}\}\)</span> with realizations in the space of partitions of <span class="math inline">\(\{1,\ldots,n\}\)</span>. <span class="math inline">\(X_1\)</span> is set to <span class="math inline">\(\{1\}\)</span>, the trivial partition of a one element space.</p>
+<p>We define <span class="math inline">\(X_n\)</span> to be the partition <span class="math inline">\(E_1,\ldots,E_k\)</span> of <span class="math inline">\(\{1,\ldots,n\}\)</span>, with <span class="math inline">\(k\leq n\)</span>. The subsequent realization <span class="math inline">\(X_{n+1}\)</span> is obtained by adding <span class="math inline">\(n+1\)</span> to one of <span class="math inline">\(E_1,\ldots, E_{k+1}\)</span> with probabilities given by <span class="math display">\[P(n+1 \in E_j) = 
+\begin{cases}
+\frac{|E_j|}{n+1} \quad j=1,\ldots,k\\
+\frac{1}{n+1} \quad j=k+1
+\end{cases}\]</span> where <span class="math inline">\(E_{k+1}\)</span> is a new block of the partition. We can slightly generalize this process by adding the <em>scaling parameter</em> <span class="math inline">\(\alpha\)</span>. In this case, we assign customers to tables with probabilities <span class="math display">\[P(n+1 \in E_j) = 
+\begin{cases}
+\frac{|E_j|}{n+\alpha} \quad j=1,\ldots,k\\
+\frac{\alpha}{n+\alpha} \quad j=k+1
+\end{cases}\]</span> with the condition <span class="math inline">\(\alpha\geq 0\)</span> such that probabilities are always nonnegative. The scaling parameter <span class="math inline">\(\alpha\)</span> represents the new customer’s affinity towards joining a new table, with <span class="math inline">\(\alpha=0\)</span> being the case where all customers will sit at the same table. There exists a further two parameter generalization including an additional parameter <span class="math inline">\(\beta\)</span>, but we will discuss the one-parameter model, equivalent to the case where <span class="math inline">\(\beta=0\)</span>, due to its closer connection with the Dirichlet process.</p>
+<p>It is straightforward to see that this process is fundamentally identical to the Blackwell-MacQueen urn scheme, with customers replaced by balls and tables replaced by colors. Indeed, the limiting proportions of customers at each table follows the GEM distribution with parameter <span class="math inline">\(\alpha\)</span>.</p>
+<p>Another interesting question is to know the distribution on the number of tables after <span class="math inline">\(n\)</span> customers have entered the restaurant (equivalently, the number of colors in the Blackwell-MacQueen urn after <span class="math inline">\(n\)</span> draws).</p>
+<p>The expected number of tables after <span class="math inline">\(n\)</span> customers have entered the restaurant is approximately given by <span class="math display">\[\alpha\log\left(1+\frac{n}{\alpha}\right)\,.\]</span> for large <span class="math inline">\(\alpha\)</span> and large <span class="math inline">\(n\)</span>.</p>
+<div class="proof">
+<p><em>Proof.</em> For each customer, regardless of what has happened previously, the probability of starting a new table is given by <span class="math inline">\(\frac{\alpha}{N+\alpha}\)</span> where <span class="math inline">\(N\)</span> is the number of customers who have previously entered. Thus, at time <span class="math inline">\(k\)</span>, it is given by <span class="math inline">\(\frac{\alpha}{k-1+\alpha}\)</span>. Note that this is independent of any previous observations. Therefore, letting <span class="math inline">\(T_n\)</span> denote the number of tables at time <span class="math inline">\(n\)</span>, we have <span class="math display">\[\begin{aligned}
+E[T_n] &amp;= \sum_{k=1}^n \frac{\alpha}{k-1+\alpha} \\
+&amp;= \alpha \sum_{k=0}^{n-1} \frac{1}{k+\alpha} \\
+&amp;= \alpha \left(\psi(\alpha+n)-\psi(\alpha)\right) \\
+&amp;\approx \alpha(\log(\alpha+n)-\log(\alpha)) \\
+&amp;\approx \alpha\log\left(1+\frac{n}{\alpha}\right)\end{aligned}\]</span> where <span class="math inline">\(\psi\)</span> is the digamma function <dt-cite key="digamma"></dt-cite>. The approximation holds for large <span class="math inline">\(\alpha\)</span> and large <span class="math inline">\(n\)</span>, since the natural logarithm approximates the digamma function in this setting. ◻</p>
+</div>
+<p>Finally, we are ready to use our knowledge of the Blackwell-MacQueen urn scheme and its related representations to define the Dirichlet process.</p>
+
+<br>
+<hr>
+<br>
+
+<h2 id="dirichlet-process">Dirichlet Process</h2>
+<h3 id="definition-and-history">Definition and History</h3>
+<h4>Definition.</h4>
+<p>Let <span class="math inline">\(H\)</span> be a probability measure over a sample space <span class="math inline">\(\Omega\)</span> and <span class="math inline">\(\alpha\in\mathbb{R}\)</span> with <span class="math inline">\(\alpha&gt;0\)</span>. Let <span class="math inline">\(X\)</span> be a random probability measure on <span class="math inline">\(\Omega\)</span>. If for every finite measurable partition <span class="math inline">\(E_1,\ldots, E_n\)</span> of <span class="math inline">\(\Omega\)</span> we have <span class="math display">\[\big(X(E_1),\ldots,X(E_n)\big)\sim \text{Dirichlet}\big(\alpha\,H(E_1),\ldots,\alpha\,H(E_n)\big)\]</span> then <span class="math inline">\(X\)</span> follows a Dirichlet process with <em>base measure</em> <span class="math inline">\(H\)</span> and <em>concentration parameter</em> <span class="math inline">\(\alpha\)</span>, denoted <span class="math inline">\(X\sim \text{DP}(H,\alpha)\)</span>. <dt-cite key="teh2010"></dt-cite>.</p>
+<p>In this sense, the defining property of the Dirichlet process is that its marginal distributions are Dirichlet distributed. However, while this explicitly defines a Dirichlet process, it does not tell us what it actually is, or even if it exists.</p>
+<p>Historically, the existence of the Dirichlet process was first shown by Ferguson <dt-cite key="ferguson1973"></dt-cite>, who used the Kolmogorov consistency theorem and gamma processes, which we will not discuss. Shortly after this, Blackwell and MacQueen proved its existence as the limiting distribution of the proportions of balls in the Blackwell-MacQueen urn scheme, by applying De Finetti’s theorem <dt-cite key="blackwellmacqueen"></dt-cite>.</p>
+<p>We can construct the Dirichlet process from the stick-breaking process by associating a draw from some underlying distribution <span class="math inline">\(H\)</span> on a sample space <span class="math inline">\(\Omega\)</span> with each component of the stick-breaking distribution. Precisely, we can view a realization from the Dirichlet process as a sum of infinitely many weighted point masses.</p>
+<h4>Theorem.</h4>
+<p>Considering two infinite dimensional vectors of weights <span class="math inline">\(\{w_n:n\in\mathbb{N},\sum_{n=1}^\infty w_n=1\}\sim \text{GEM}(\alpha)\)</span> and locations <span class="math inline">\(\{x_n:n\in\mathbb{N}\}\overset{iid}{\sim}H\)</span>, the random measure <span class="math display">\[\mu:=\sum_{i=1}^\infty w_i\delta_{x_i}\,.\]</span> follows a Dirichlet process with base measure <span class="math inline">\(H\)</span> and concentration parameter <span class="math inline">\(\alpha\)</span>.</p>
+<p>Thus, this association of stick-breaking weights with locations from <span class="math inline">\(H\)</span> is a construction of the Dirichlet process. We will not give a proof of this, but the interested reader can refer to section 3 of Sethuraman (1994) <dt-cite key="sethuraman1994"></dt-cite>.</p>
+<p>This allows us to form an intuitive understanding of what a realization from the Dirichlet process looks like by considering the processes discussed earlier: the Blackwell-MacQueen urn scheme, restaurant seating process, and the stick-breaking process. Once again, suppose we have an underlying measure <span class="math inline">\(H\)</span> on a sample space <span class="math inline">\(\Omega\)</span>. Then, to construct the Dirichlet process, we can associate each independent draw from <span class="math inline">\(H\)</span> a the weight that corresponding to one of the following:</p>
+<ol>
+<li><p>The length of a stick in the stick-breaking process</p></li>
+<li><p>The limiting proportion of balls of a certain color in the Blackwell-MacQueen urn scheme</p></li>
+<li><p>The limiting proportion of customers at a specific table in the restaurant seating process</p></li>
+</ol>
+<p>Now, we provide a visualization that illustrates how random measures created in this fashion satisfy the defining property of the Dirichlet process. If <span class="math inline">\(\mu\sim \text{DP}(H,\alpha)\)</span>, then when we divide the sample space <span class="math inline">\(\Omega\)</span> into a finite partition <span class="math inline">\(E_1,\ldots, E_n\)</span>, the random vector <span class="math inline">\((\mu(E_1),\ldots,\mu(E_n))\)</span> will follow a Dirichlet distribution with parameter <span class="math inline">\((\alpha H(E_1),\ldots,\alpha H(E_n))\)</span>.</p>
+<p>For example, let <span class="math inline">\(H\)</span> be uniform on <span class="math inline">\(\Omega=[0,1]\times [0,1]\)</span>. We can draw samples from <span class="math inline">\(\text{DP}(H,\alpha)\)</span> using the stick-breaking process a uniform random variable, and visually represent them as as circles in the square, with area proportional to the weight of each point mass. In the visualization below, move the line endpoints to partition the square, and observe the limiting distribution of the proportion of mass contained one region, which should approximate <span class="math inline">\(\text{Beta}(\alpha A_1, \alpha A_2)\)</span>, where <span class="math inline">\(A_1,A_2\)</span> denote the area contained in each region.</p>
+
+<div id="observablehq-e42dd46b">
+  <div class="observablehq-viz"></div>
+</div>
+<script type="module">
+  import {Runtime, Inspector} from "https://cdn.jsdelivr.net/npm/@observablehq/runtime@4/dist/runtime.js";
+  import define from "https://api.observablehq.com/@sean-ohagan/dp-partioning.js?v=3";
+  (new Runtime).module(define, name => {
+    if (name === "viz") return Inspector.into("#observablehq-e42dd46b .observablehq-viz")();
+  });
+</script>
+
+<p>Remember that in the image on the left, we show just one draw from the Dirichlet process. The histogram on the right is a distributional approximation, in which the proportion of mass contained in a region is sampled over a large number of draws from the process.</p>
+<p>Now that we know what the Dirichlet process looks like, we can discuss some of its properties.</p>
+<h3 id="expectation-and-almost-sure-discreteness">Expectation and almost-sure discreteness</h3>
+<p>Now, we look identify the parameters of the Dirichlet process with a notion of mean and variance <dt-cite key="teh2010"></dt-cite>.</p>
+<p>The expectation of a Dirichlet process is its base measure.</p>
+<div class="proof">
+<p><em>Proof.</em> Let <span class="math inline">\(X\sim \text{DP}(H,\alpha)\)</span>. Then, using the partitioning property of the Dirichlet process, for any measurable set <span class="math inline">\(A\)</span> in the sample space, we have <span class="math display">\[X(A) \sim \text{Beta}\left(\alpha H(E), \alpha(1-H(E))\right)\]</span> and thus <span class="math display">\[E[X(A)] = \frac{\alpha H(A)}{\alpha H(A)+\alpha(1-H(A))} = H(A)\]</span> ◻</p>
+</div>
+<p>Thus, the base measure <span class="math inline">\(H\)</span> is indeed the mean of the Dirichlet process. However, even if <span class="math inline">\(H\)</span> is continuous, samples from the Dirichlet process are almost surely discrete <dt-cite key="teh2010"></dt-cite>. The stick-breaking construction of the Dirichlet process helps to illuminate this idea. As <span class="math inline">\(\alpha\)</span> grows larger, samples drawn from the process more closely resemble the base measure <span class="math inline">\(H\)</span>, as the point masses are more ‘spread out’ to better resemble a continuous distribution, so <span class="math inline">\(\alpha\)</span> can be thought of as a descriptor of the variance of samples.</p>
+<p>We can use the following visualization to examine what samples from the Dirichlet process look like. Here, we can draw samples from <span class="math inline">\(\text{DP}(H,\alpha)\)</span> where <span class="math inline">\(H\)</span> is a standard normal distribution on the real line and <span class="math inline">\(\alpha\)</span> is user-selected.</p>
+
+<div id="observablehq-36abf2bd">
+    <div class="observablehq-display"></div>
+  </div>
+  <script type="module">
+    import {Runtime, Inspector} from "https://cdn.jsdelivr.net/npm/@observablehq/runtime@4/dist/runtime.js";
+    import define from "https://api.observablehq.com/@sean-ohagan/dp-samples.js?v=3";
+    (new Runtime).module(define, name => {
+      if (name === "display") return Inspector.into("#observablehq-36abf2bd .observablehq-display")();
+    });
+  </script>
+
+<h3 id="prior-conjugacy">Prior conjugacy</h3>
+<p>To motivate the useful property of the Dirichlet process as a prior in Bayesian inference, we first turn back to its finite dimensional counterpart. In Bayesian inference, the beta distribution is inherently useful as a prior distribution for a binomial data-generating process due to its conjugate nature. More explicitly, when our data is drawn from something of binomial nature, such as repeated flips of a coin, we can put a beta prior on the proportion to yield a beta posterior on the proportion as well. Indeed, the same is done using the Dirichlet distribution for multinomial data, like rolling a <span class="math inline">\(k\)</span> sided (unfair) die.</p>
+<p>We now extend this to the case when our data comes from categorical discrete distribution over a countably infinite number of categories. A principle of this type of problem is the clustering of data points where the number of clusters is thought to grow infinitely with the sample size. An example of this could be grouping articles by their topics, as the number of topics should grow with the number of articles. We seek to determine which group each data point belongs in, when the number of potential groups is unknown and bounded only by the number of data points.</p>
+<p>Let <span class="math inline">\(X\sim \text{DP}(H,\alpha)\)</span>, and let <span class="math inline">\(\Omega\)</span> be the sample space of <span class="math inline">\(H\)</span>. If we consider exchangeable samples <span class="math inline">\(\theta_1,\ldots,\theta_n\)</span> drawn from <span class="math inline">\(X\)</span> as our data, we look to infer the posterior distribution <span class="math inline">\(X|\theta_1,\ldots,\theta_n\)</span>.</p>
+<p>If <span class="math inline">\(X\sim\text{DP}(H,\alpha)\)</span> and we observed <span class="math inline">\(\theta_1,\ldots,\theta_n\)</span> as draws from <span class="math inline">\(X\)</span>, the posterior distribution is given by <span class="math display">\[X|\theta_1,\ldots,\theta_n\sim\text{DP}\left(\frac{\alpha\,H+\sum_{i=1}^n\delta_{\theta_i}}{\alpha+n}, \alpha+n\right)\,.\]</span></p>
+<div class="proof">
+<p><em>Proof.</em> To show that the posterior of <span class="math inline">\(X|\theta_1,\ldots,\theta_n\)</span> must necessarily be a Dirichlet process as well, we consider the defining property of a Dirichlet process. Let <span class="math inline">\(E_1,\ldots,E_k\)</span> be a finite partition of <span class="math inline">\(\Omega\)</span>. Note that since <span class="math inline">\(X\)</span> is a Dirichlet process, we have <span class="math display">\[\left(X(E_1),\ldots,X(E_k)\right)\sim\text{Dirichlet}(\alpha\,H(E_1),\ldots,\alpha\,H(E_k)\,.\]</span> If we define <span class="math display">\[n_j = \sum_{i=1}^k{1_{\{\theta_i\in E_j\}}}\,,\]</span> the count of observed samples that lie in <span class="math inline">\(E_j\)</span>, then we observe that <span class="math display">\[\left(X(E_1),\ldots,X(E_k)\right)|\theta_1,\ldots,\theta_n\sim\text{Dirichlet}(\alpha\,H(E_1)+n_1,\ldots,\alpha\,H(E_k)+n_k)\]</span> using the conjugate nature between the Dirichlet and multinomial distributions <dt-cite key="teh2010"></dt-cite>. This also implies that the posterior on <span class="math inline">\(X|\theta_1,\ldots,\theta_n\)</span> is a Dirichlet process as well, and thus its nature as a conjugate prior. Next, we look to determine the parameters of the posterior. From the above expression, we have that for each <span class="math inline">\(j=1,\ldots,k\)</span>, <span class="math inline">\(\alpha\,H(E_j)+n_j=\alpha&#39;\,H&#39;(E_j)\)</span>, where <span class="math inline">\(\alpha&#39;,H&#39;\)</span> are the parameters of the posterior. Observe that <span class="math display">\[\begin{aligned}
+\left(\alpha+n\right)\left(\frac{\alpha\,H + \sum_{i=1}^n\delta_{\theta_i}}{\alpha+n}\right)\left(E_j\right)&amp;= \alpha\,H(E_j)+\left(\sum_{i=1}^n\delta_{\theta_i}\right)\left(E_j\right)\\
+&amp;= \alpha\,H(E_j)+n_j\,,\end{aligned}\]</span> and thus <span class="math display">\[X|\theta_1,\ldots,\theta_n\sim\text{DP}\left(\frac{\alpha\,H+\sum_{i=1}^n\delta_{\theta_i}}{\alpha+n}, \alpha+n\right)\,.\]</span> ◻</p>
+</div>
+<p>Intuitively, this should be logical as we are augmenting the prior base measure <span class="math inline">\(H\)</span> by adding a collection of point masses corresponding to the observed data.</p>
+<p>Examining this posterior distribution, we see that the new base measure is a weighted average of the previous measure <span class="math inline">\(H\)</span> and the observed data. <span class="math inline">\(\alpha\)</span> acts as a weight for the prior base distribution <span class="math inline">\(H\)</span> while the number of observations <span class="math inline">\(n\)</span> acts as a weight for the empirical distribution of the observed data. As <span class="math inline">\(\alpha\to 0\)</span>, the base measure loses its impact on the data, and the posterior is entirely determined by the observed data. A similar phenomenon occurs as the number of observed data points <span class="math inline">\(n\)</span> grows large, regardless of the value for <span class="math inline">\(\alpha\)</span>.</p>
+<p>Notice that the posterior predictive distribution on a new observation <span class="math inline">\(\tilde{\theta}\)</span> can be obtained by marginalizing the distribution of <span class="math inline">\(\tilde{\theta}\)</span> given <span class="math inline">\(\theta_1,\ldots,\theta_n\)</span> over the posterior of <span class="math inline">\(X|\theta_1,\ldots,\theta_n\)</span>. Thus we have for any measurable <span class="math inline">\(E\)</span>, <span class="math display">\[\begin{aligned}
+\tilde{\theta}|\theta_1,\ldots,\theta_n\sim E(X|\theta_1,\ldots,\theta_n)=\frac{\alpha\,H+\sum_{i=1}^n\delta_{\theta_i}}{\alpha+n}\,.\end{aligned}\]</span> since the base measure of a Dirichlet process is its expectation.</p>
+
+<br>
+<hr>
+<br>
+
+<h2 id="mixture-models">Mixture Models</h2>
+<p>At this point, we pivot from the theoretical foundations and properties of the Dirichlet process to a class of models in which they are widely used as prior distributions. Mixture models are probabilistic models that suppose that the data comes from a mixture of component distributions. Inference on these models seeks to determine the parameters of each distribution from the data, such that the mixture of the distributions best represents the data, without knowing which data points come from each distribution. They are widely used to model subpopulations within a greater population, such as certain species within an animal population.</p>
+<h3 id="finite-mixture-models">Finite mixture models</h3>
+<p>The general density of a finite mixture model is given by a weighted sum of densities from subpopulations. Explicitly, for a mixture with <span class="math inline">\(k\)</span> components (subdistributions), its density is <span class="math display">\[p(x|\pi,\theta) = \sum_{i=1}^k \pi_i p_i(x|\theta_i)\]</span> where <span class="math inline">\(\pi\)</span> is a vector of weights often called <em>mixing weights</em>, and <span class="math inline">\(p_i(x)\)</span> is the density of the <span class="math inline">\(i\)</span>th subdistribution, <span class="math inline">\(i=1,\ldots,k\)</span>. We see that in order for this to be a valid density, the mixing weights must sum to one. When fitting the model, we seek to infer the mixing weights <span class="math inline">\(\pi\)</span> and component parameters <span class="math inline">\(\theta\)</span> from the data.</p>
+<p>Given observations <span class="math inline">\(x_1,\ldots,x_n\)</span> and a parametric class of distributions <span class="math inline">\(F(\theta)\)</span>, we suppose that each observation <span class="math inline">\(x_i\)</span> belongs to a subpopulation indexed by a latent variable <span class="math inline">\(z_i\)</span>. This model has two hyperparameters: <span class="math inline">\(\alpha\)</span>, the parameter of the Dirichlet prior of the mixing weights, and <span class="math inline">\(\beta\)</span>, the parameter(s) of the prior of each component parameter <span class="math inline">\(\theta_i\)</span>, <span class="math inline">\(i=1,\ldots,k\)</span>. <span class="math display">\[\begin{aligned}
+    \pi|\alpha&amp;\sim\text{Dirichlet}\left(\frac{\alpha}{k},\ldots,\frac{\alpha}{k}\right)\\
+    z_i|\pi&amp;\sim\text{Categorical}(\pi) \\
+    \theta_i|H,\beta &amp;\sim H(\beta) \\
+    x_i|z_i,\theta_1,\ldots,\theta_k &amp;\sim F(\theta_{z_i})\end{aligned}\]</span> <span class="math inline">\(H\)</span>, the prior on the component parameters, is typically selected to be the conjugate prior to <span class="math inline">\(F\)</span>.</p>
+<h3 id="gaussian-mixture-model">Gaussian mixture model</h3>
+<p>As an example, let’s consider a bivariate Gaussian mixture model with three components. For observed data <span class="math inline">\(x_1,\ldots,x_n\)</span>, we now can reformulate the above model to have multivariate normal component distributions: <span class="math display">\[\begin{aligned}
+    \pi|\alpha &amp;\sim \text{Dirichlet}\left(\frac{\alpha}{3},\frac{\alpha}{3},\frac{\alpha}{3}\right) \\
+    z_i|\pi &amp;\sim \text{Categorical}(\pi) \\
+    (\mu_i,\Lambda_i)|\mu_0,\kappa_0,\nu_0,T_0 &amp;\sim \text{NW}(\mu_0,\kappa_0,\nu_0, T_0) \\ 
+    x_i|z_i,\mu_1,\Lambda_1,\ldots,\mu_3,\Lambda_3 &amp;\sim \mathcal{N}(\mu_{z_i},\Lambda_{z_i}^{-1})\end{aligned}\]</span> where <span class="math inline">\(\text{NW}\)</span> denotes the normal-Wishart distribution, the conjugate prior of multivariate normal with unknown mean and variance <dt-cite key="bda3"></dt-cite>. The model has hyperparameters <span class="math inline">\(\alpha\)</span> and <span class="math inline">\(\mu_0,\kappa_0,\nu_0,\Psi_0\)</span>.</p>
+<p>Let’s fit this model to some data. We will be considering the Palmer penguins <dt-cite key="palmerpenguins"></dt-cite>, which contains physical measurements of three penguin species in the Palmer archipelago in Antarctica. For this example we will only consider two predictor variables, bill length and bill depth, so that we can visualize the model clearly in 2 dimensions without any dimensionality reduction.</p>
+<figure>
+<img src="../images/penguinplotgmm.png" id="fig:my_label" alt="Example of Bivariate GMM" /><figcaption aria-hidden="true">Example of Bivariate GMM</figcaption>
+</figure>
+<h3 id="dirichlet-process-mixture-models">Dirichlet process mixture models</h3>
+<p>Now, we extend the idea of finite mixture models to the infinite case. Suppose now that instead of a model where our data comes from a fixed, finite number of component distributions, we instead do not impose such a restriction. Consider a density of the following form: <span class="math display">\[p(x|\theta,P) = \int p(x|\theta)\,\mathrm{d}P(\theta)\]</span> That is, the model is a mixture of the component distributions with respect to a mixing measure <span class="math inline">\(P\)</span>. Due to the nice conjuacy properties we showed earlier, the Dirichlet process turns out to be a desirable prior to use for <span class="math inline">\(P\)</span> in a Bayesian modeling setting.</p>
+<p>Suppose we have a set of exchangeable data points <span class="math inline">\(x_1,\ldots,x_n\)</span>. We again suppose that this data is generated from a mixture of components each with a parametric distribution <span class="math inline">\(F(\theta)\)</span>. We let <span class="math inline">\(P\)</span> represent the mixing distribution over these parameters, and let our prior on <span class="math inline">\(P\)</span> be a Dirichlet process with base measure <span class="math inline">\(H\)</span> and concentration <span class="math inline">\(\alpha\)</span>. First introduced in Antoniak (1974) <dt-cite key="antoniak1974"></dt-cite>, the model relations are given as</p>
+<p><span class="math display">\[\begin{aligned}
+x_i|\theta_i\sim F(\theta_i) \\
+\theta_i|P\sim P \\
+P|H,\alpha \sim \text{DP}(H,\alpha)\end{aligned}\]</span></p>
+<p>While this model nicely makes use of the theory that we have introduced earlier, it can be fairly unintuitive, especially when compared to the finite mixture model. In practice, we can modify the above formulation to make it more analogous with the finite case by adding a latent variable <span class="math inline">\(z_i\)</span> that once again describes the class label of each data point <span class="math inline">\(x_i\)</span>.</p>
+<p>We can suppose that the model is a countable weighted average of subdistributions, with the form <span class="math display">\[p(x|\pi,\theta)=\sum_{i=1}^\infty \pi_i\,p_i(x|\theta_i)\,,\qquad \sum_{i=1}^\infty \pi_i = 1\,.\]</span> In practice, since we fit these models to finite sets of data, we note that the number of components is practically bounded by the number of data points <span class="math inline">\(n\)</span>, as otherwise the model would consist of components from which none of the data comes. Furthermore, the actual bound is much tighter, as the number of components actually follows the same logarithmic bound that we see on the number of tables in the restaurant seating process. It may seem as if the infinite case is the same as a finite mixture model with <span class="math inline">\(n\)</span> components, but the key distinction is that the number of clusters is not fixed, and is fit to the data.</p>
+<p>Similarly to the finite case, considering observed data <span class="math inline">\(x_1,\ldots,x_n\)</span>, we suppose again that each <span class="math inline">\(x_i\)</span> belongs to a subpopulation indexed by a latent variable <span class="math inline">\(z_i\)</span>. However, in this case, we let our hyperparameter <span class="math inline">\(\alpha\)</span> be the parameter of a GEM distribution used as the prior for the mixing weights <span class="math inline">\(\pi\)</span>, and again let <span class="math inline">\(\beta\)</span> be the parameter of the prior of each component parameter <span class="math inline">\(\theta_i\)</span>,<span class="math inline">\(i=1,\ldots,n\)</span>. Note that we make use here of the number of data points as a practical bound for the number of components. Explicitly, we can write the model as:</p>
+<p><span class="math display">\[\begin{aligned}
+\pi|\alpha &amp;\sim\text{GEM}(\alpha) \\
+z_i|\pi &amp;\sim \text{Categorical}(\pi) \\
+\theta_i|H,\beta &amp;\sim H(\beta) \\ 
+x_i|z_i,\theta_1,\ldots,\theta_n &amp;\sim F(\theta_{z_i})\end{aligned}\]</span> Thus, the infinite mixture model, when fit to some data, can be thought of similarly to the finite mixture model, with the key difference being the GEM prior on the mixing weights as opposed to a symmetric Dirichlet distribution.</p>
+<h3 id="dirichlet-process-gaussian-mixture-modeling">Dirichlet Process Gaussian Mixture Modeling</h3>
+<p>To see this in action, we can demonstrate this model with multivariate Gaussian components on the same dataset to which we fit the finite model. The explicit modeling relations are similar to the finite case, but with a GEM/stick-breaking prior on the mixing weights. Explicitly, the model can be written as follows:</p>
+<p><span class="math display">\[\begin{aligned}
+\pi|\alpha &amp;\sim\text{GEM}(\alpha) \\
+z_i|\pi &amp;\sim \text{Categorical}(\pi) \\
+(\mu_i,\Lambda_i)|\mu_0,\kappa_0,\nu_0,T_0 &amp;\sim \text{NW}(\mu_0,\kappa_0,\nu_0,T_0) \\ 
+x_i|z_i,\mu_1,\Lambda_1,\ldots,\mu_n,\Lambda_n &amp;\sim \mathcal{N}(\mu_{z_i},\Lambda_{z_i}^{-1})\end{aligned}\]</span> where <span class="math inline">\(\mathcal{N}\)</span> denotes the multivariate normal distribution and <span class="math inline">\(\text{NW}\)</span> denotes the normal-Wishart distribution. The model has 5 hyperparameters: <span class="math inline">\(\alpha\)</span>, the parameter of the stick-breaking prior on the mixing weights, and <span class="math inline">\(\mu_0,\kappa_0,\nu_0,T_0\)</span>, the parameters of the normal-Wishart prior on the mean and precision matrix of each component distribution.</p>
+<p>In these examples, we fit the models to the (scaled) data using 1000 iterations of a Monte Carlo algorithm known as Gibbs sampling <dt-cite key="bda3"></dt-cite>. We varied <span class="math inline">\(\alpha\)</span> and used <span class="math inline">\(\mu_0=0\)</span>, <span class="math inline">\(\kappa_0=\nu_0=2\)</span>, and <span class="math inline">\(T_0=I\)</span> as the parameters of the normal-Wishart prior on each component. The models fit some number of multivariate normal distributions to the data, and we can then assign data points to classes based on which distribution has the highest likelihood of producing that data point. To determine the model’s clustering accuracy, we can compare these predictions to the true species labels after identifying each cluster with a particular species. This identification can either be manually done after a quick inspection of the model, or we can choose whichever identification yields the optimal clustering accuracy. Once a model like this has been fit to the data, we can use it to classify the species of new data points as well.</p>
+<p>As <span class="math inline">\(\alpha\)</span> varies, the number of clusters that the algorithm realizes can be vastly different. We show a few examples with lower and higher <span class="math inline">\(\alpha\)</span> values respectively to see this difference.</p>
+<figure>
+<img src="../images/dpalphacorrect.png" id="fig:my_label" alt="DPGMM Clustering Results on Palmer Penguins Dataset, \alpha=1" /><figcaption aria-hidden="true">DPGMM Clustering Results on Palmer Penguins Dataset, <span class="math inline">\(\alpha=1\)</span></figcaption>
+</figure>
+<p>In the above example, we observe that the DP mixture model is able to correctly identify the number of clusters in the data, and provide a very similar partitioning to the finite mixture model with a prespecified number of clusters. When compared to the true species labels, this model achieves an average clustering accuracy of 0.9824, which is an excellent result when considering that the number of components was not specified in the model.</p>
+<figure>
+<img src="../images/dp_alpha001.png" id="fig:my_label" alt="DPGMM Clustering Results on Palmer Penguins Dataset, \alpha=0.01. Here we see that the model identifies every data point to be in the same cluster." /><figcaption aria-hidden="true">DPGMM Clustering Results on Palmer Penguins Dataset, <span class="math inline">\(\alpha=0.01\)</span>. Here we see that the model identifies every data point to be in the same cluster.</figcaption>
+</figure>
+<figure>
+<img src="../images/dpalpha100.png" id="fig:my_label" alt="DPGMM Clustering Results on Palmer Penguins Dataset, \alpha=100. Here we see that the model creates many extra clusters that contain very few data points." /><figcaption aria-hidden="true">DPGMM Clustering Results on Palmer Penguins Dataset, <span class="math inline">\(\alpha=100\)</span>. Here we see that the model creates many extra clusters that contain very few data points.</figcaption>
+</figure>
+<h3 id="inference-in-mixture-models">Inference in Mixture Models</h3>
+<p>After defining a model, the next consideration is <em>fitting it</em> to our data, commonly referred to as <em>inference</em> in a Bayesian setting, equivalent to <em>training</em> in machine learning. Recall that Bayes’ theorem tells us that the posterior distribution of our parameters <span class="math inline">\(\theta\)</span> given our data <span class="math inline">\(y\)</span> is proportional to the product of the prior distribution on the parameter and the likelihood of the data. <span class="math display">\[p(\theta|x)\propto p(x|\theta)p(\theta)\]</span> In many cases, especially in the foundational period of Bayesian statistics, inference was only feasible in cases where the prior and likelihood are of the right form such that the posterior takes on a known distribution. Specifically, conjugate priors were used, where the posterior will take the same form as the prior with updated parameters. The reason that a more general case was not feasible was the difficulty in computing the normalizing factor <span class="math inline">\(p(x)\)</span>, which is necessary to make the posterior a proper distribution.</p>
+<p>However, in 1990, Gelfand and Smith published a landmark paper regarding the usage of sampling methods, or Monte Carlo methods, to draw samples from posterior distributions in a general case <dt-cite key="gelfand1990"></dt-cite>. Sampling methods like this construct a Markov chain whose equilibrium distribution is the true posterior. While these methods still do not yield the posterior in analytical form, drawing samples allows us to approximate the density, obtain estimates of the mean or mode, and compute various probabilities. Typically, collapsed Gibbs samplers and blocked Gibbs samplers are used for sampling-style approximate inference in Dirichlet process mixture models <dt-cite key="blei2006"></dt-cite>.</p>
+<p>Another popular approximate inference method is variational inference (VI). VI is simple in essence: we first select a family of distributions for the posterior and choose the member of the family that is the ‘closest’ to the true posterior, with ‘closest’ being qualified as having the minimum Kullback-Leibler divergence to the true posterior. Effectively, this turns finding the posterior into an optimization problem rather than a Monte Carlo problem. Generally speaking, VI is less computationally intensive than sampling, but does not offer the guarantee of asymptotically exact samples from the posterior <dt-cite key="blei2017"></dt-cite></span>. In 2006, David Blei adapted variational inference to Dirichlet process mixture models as well, which has been an increasing popular method for inference, particularly as dimensionality grows <dt-cite key="blei2006"></dt-cite>.</p>
+
+<br>
+<hr>
+<br>
+
+<h2 id="conclusion">Conclusion</h2>
+<p>At this point, the reader should have obtained an overview of the Dirichlet process and an intuitive understanding of their theoretical background and their role in mixture modeling. As we see, the Dirichlet process is a useful tool in nonparametric Bayesian modeling, and can easily be extended beyond what we have seen here as well. For example, the hierarchical Dirichlet process <dt-cite key="teh2006hierarchical"></dt-cite> extends Dirichlet process mixtures to grouped data. The Pitman-Yor process <dt-cite key="ishwaran"></dt-cite> generalizes the Dirichlet process by drawing weights from the two-parameter Poisson-Dirichlet process instead of the stick-breaking distribution, and has uses in natural language processing. The Dirichlet process has other applications as well in density estimation and nonparametric hypothesis testing. For further reading on these topics, we recommend the referenced material, especially Teh (2010) <dt-cite key="teh2010"></dt-cite> for a slightly more involved overview.</p>
+
+
+</dt-article>
+
+<dt-appendix>
+  <h3>Acknowledgements</h3>
+  <p>We would like to thank Professor Jeremy Teitelbaum (University of Connecticut) for his overwhelming support and assistance throughout the duration of this project.</p>
+</dt-appendix>
+
+<script type="text/bibliography">
+    @inproceedings{castro2016bnp,
+        author = {Coelho, De Castro D and Glocker, B},
+        title = {Dirichlet Process Mixture Models: Application to Brain Image Segmentation},
+        url = {https://sites.google.com/site/nipsbnp2016/accepted-papers},
+        year = {2016}
+    }
+    @article{definetti1937,
+        author = {Bruno de Finetti},
+        year = {1937},
+        volume = {17},
+        title = {La Pr\'evision: Ses Lois Logiques, Ses Sources Subjectives},
+        pages = {1--68},
+        journal = {Annales de l'Institut Henri Poincar\'e},
+        publisher = {John Wiley and Sons}
+    }
+    @article{definetti1974,
+      author = {Nußbaum, M.},
+      title = {De Finetti, B.: Theory of Probability. John Wiley \& Sons, London-New York-Sydney-Toronto 1974. XIX, 300 S., £7,50},
+      journal = {Biometrische Zeitschrift},
+      volume = {17},
+      number = {2},
+      pages = {126-127},
+      doi = {https://doi.org/10.1002/bimj.19750170211},
+      url = {https://onlinelibrary.wiley.com/doi/abs/10.1002/bimj.19750170211},
+      eprint = {https://onlinelibrary.wiley.com/doi/pdf/10.1002/bimj.19750170211},
+      year = {1975}
+  }
+  @book{doob1953,
+      author = {Joseph L. Doob},
+      title = {Stochastic Processes},
+      publisher = {John Wiley \& Sons},
+      location = {New York},
+      year = {1953}
+  }
+  @article{oneal,
+      ISSN = {03067734, 17515823},
+      URL = {http://www.jstor.org/stable/27919725},
+      abstract = {We examine the difference between Bayesian and frequentist statistics in making statements about the relationship between observable values. We show how standard models under both paradigms can be based on an assumption of exchangeability and we derive useful covariance and correlation results for values from an exchangeable sequence. We find that such values are never negatively correlated, and are generally positively correlated under the models used in Bayesian statistics. We discuss the significance of this result as well as a phenomenon which often follows from the differing methodologies and practical applications of these paradigms — a phenomenon we call Bayes' effect. Nous examinons la différence entre les statistiques Bayesiennes et fréquentistes dans des propositions sur la relation entre valeurs observées. Nous démontrons comment les modèles normaux dans les deux cas peuvent être basés sur la supposition d'échangeabilité, et nous obtenons quelques résultats utiles sur la covariance et la corrélation pour des valeurs dans une suite échangeable. Ces valeurs ne sont jamais corrélées négativement, et sont en général corrélées positivement dans les modèles Bayesiens. Nous discutons la signification de ce résultat, ainsi que celui du phénomène qui s'ensuit lorsqu'on emploie ces deux méthodologies, un phénomène que nous appelons l'effet de Bayes.},
+      author = {Ben O'Neill},
+      journal = {International Statistical Review / Revue Internationale de Statistique},
+      number = {2},
+      pages = {241--250},
+      publisher = {[Wiley, International Statistical Institute (ISI)]},
+      title = {Exchangeability, Correlation, and Bayes' Effect},
+      volume = {77},
+      year = {2009}
+  }
+  @article{blackwellmacqueen,
+      author = {David Blackwell and James B. MacQueen},
+      title = {{Ferguson Distributions Via Polya Urn Schemes}},
+      volume = {1},
+      journal = {The Annals of Statistics},
+      number = {2},
+      publisher = {Institute of Mathematical Statistics},
+      pages = {353 -- 355},
+      year = {1973},
+      doi = {10.1214/aos/1176342372},
+      URL = {https://doi.org/10.1214/aos/1176342372}
+  }
+  @Inbook{ewens1990,
+      author="Ewens, W. J.",
+      editor="Lessard, Sabin",
+      title="Population Genetics Theory - The Past and the Future",
+      bookTitle="Mathematical and Statistical Developments of Evolutionary Theory",
+      year="1990",
+      publisher="Springer Netherlands",
+      address="Dordrecht",
+      pages="177--227",
+      abstract="Classical population genetics theory was largely directed towards processes relating to the future. Present theory, by contrast, focuses on the past, and in particular is motivated by the desire to make inferences about the evolutionary processes which have led to the presently observed patterns and nature of genetic variation. There are many connections between the classical prospective theory and the new retrospective theory. However, the retrospective theory introduces ideas not appearing in the classical theory, particularly those concerning the ancestry of the genes in a sample or in the entire population. It also introduces two important new distributions into the scientific literature, namely the Poisson-Dirichlet and the GEM: these are important not only in population genetics, but also in a very wide range in science and mathematics. Some of these are discussed. Population genetics theory has been greatly enriched by the introduction of many new concepts relating to the past evolution of biological populations.",
+      isbn="978-94-009-0513-9",
+      doi="10.1007/978-94-009-0513-9_4",
+      url="https://doi.org/10.1007/978-94-009-0513-9_4"
+  }
+  @article{sethuraman1994,
+      added-at = {2009-09-10T14:36:22.000+0200},
+      author = {Sethuraman, Jayaram},
+      interhash = {4fcacac17864e008a908928ef7091141},
+      intrahash = {a7d63ad6a7d9bdcc2a6a1a3032863e7e},
+      journal = {Statistica Sinica},
+      keywords = {imported},
+      owner = {heinrich},
+      pages = {639-650},
+      timestamp = {2009-09-10T14:36:48.000+0200},
+      title = {A constructive definition of Dirichlet priors},
+      volume = {4},
+      year = {1994}
+  }
+  @book{bda3,
+    added-at = {2009-10-28T04:42:52.000+0100},
+    author = {Gelman, Andrew and Carlin, John B. and Stern, Hal S. and Rubin, Donald B.},
+    biburl = {https://www.bibsonomy.org/bibtex/2f7d7012c81d89965db2cfedf698f53c7/jwbowers},
+    citeulike-article-id = {106919},
+    date-added = {2007-09-03 22:45:16 -0500},
+    date-modified = {2007-09-03 22:45:16 -0500},
+    edition = {2nd ed.},
+    interhash = {9c5f4ce8c45003080aa52ac74eb4c78c},
+    intrahash = {f7d7012c81d89965db2cfedf698f53c7},
+    keywords = {bayesian statistics},
+    publisher = {Chapman and Hall/CRC},
+    timestamp = {2009-10-28T04:43:08.000+0100},
+    title = {Bayesian Data Analysis},
+    year = {2004}
+}
+@incollection{teh2010,
+    Author = {Y. W. Teh},
+    Booktitle = {Encyclopedia of Machine Learning},
+    Publisher = {Springer},
+    Title = {Dirichlet Processes},
+    Year = {2010}
+}
+@Manual{palmerpenguins,
+    title = {palmerpenguins: Palmer Archipelago (Antarctica) penguin data},
+    author = {Allison Marie Horst and Alison Presmanes Hill and Kristen B Gorman},
+    year = {2020},
+    note = {R package version 0.1.0},
+    doi = {10.5281/zenodo.3960218},
+    url = {https://allisonhorst.github.io/palmerpenguins/},
+}
+@article{antoniak1974,
+    author = {Charles E. Antoniak},
+    title = {{Mixtures of Dirichlet Processes with Applications to Bayesian Nonparametric Problems}},
+    volume = {2},
+    journal = {The Annals of Statistics},
+    number = {6},
+    publisher = {Institute of Mathematical Statistics},
+    pages = {1152 -- 1174},
+    keywords = {Bayes, bio-assay, Dirichlet process, discrimination, Empirical Bayes, mixing distribution, nonparametric, Random measures},
+    year = {1974},
+    doi = {10.1214/aos/1176342871},
+    URL = {https://doi.org/10.1214/aos/1176342871}
+}
+@article{gelfand1990,
+    ISSN = {01621459},
+    URL = {http://www.jstor.org/stable/2289776},
+    abstract = {Stochastic substitution, the Gibbs sampler, and the sampling-importance-resampling algorithm can be viewed as three alternative sampling- (or Monte Carlo-) based approaches to the calculation of numerical estimates of marginal probability distributions. The three approaches will be reviewed, compared, and contrasted in relation to various joint probability structures frequently encountered in applications. In particular, the relevance of the approaches to calculating Bayesian posterior densities for a variety of structured models will be discussed and illustrated.},
+    author = {Alan E. Gelfand and Adrian F. M. Smith},
+    journal = {Journal of the American Statistical Association},
+    number = {410},
+    pages = {398--409},
+    publisher = {[American Statistical Association, Taylor & Francis, Ltd.]},
+    title = {Sampling-Based Approaches to Calculating Marginal Densities},
+    volume = {85},
+    year = {1990}
+}
+@article{blei2006,
+    author = {David M. Blei and Michael I. Jordan},
+    title = {{Variational inference for Dirichlet process mixtures}},
+    volume = {1},
+    journal = {Bayesian Analysis},
+    number = {1},
+    publisher = {International Society for Bayesian Analysis},
+    pages = {121 -- 143},
+    keywords = {Bayesian computation, Dirichlet processes, hierarchical models, image processing, variational inference},
+    year = {2006},
+    doi = {10.1214/06-BA104},
+    URL = {https://doi.org/10.1214/06-BA104}
+} 
+@article{blei2017,
+    author = {David M. Blei and Alp Kucukelbir and Jon D. McAuliffe},
+    title = {Variational Inference: A Review for Statisticians},
+    journal = {Journal of the American Statistical Association},
+    volume = {112},
+    number = {518},
+    pages = {859-877},
+    year  = {2017},
+    publisher = {Taylor & Francis},
+    doi = {10.1080/01621459.2017.1285773},
+    URL = { 
+            https://doi.org/10.1080/01621459.2017.1285773    
+    },
+    eprint = { 
+            https://doi.org/10.1080/01621459.2017.1285773    
+    }
+}
+@article{teh2006hierarchical,
+    abstract = {We consider problems involving groups of data where each observation within a group is a draw from a mixture model and where it is desirable to share mixture components between groups. We assume that the number of mixture components is unknown a priori and is to be inferred from the data. In this setting it is natural to consider sets of Dirichlet processes, one for each group, where the well-known clustering property of the Dirichlet process provides a nonparametric prior for the number of mixture components within each group. Given our desire to tie the mixture models in the various groups, we consider a hierarchical model, specifically one in which the base measure for the child Dirichlet processes is itself distributed according to a Dirichlet process. Such a base measure being discrete, the child Dirichlet processes necessarily share atoms. Thus, as desired, the mixture models in the different groups necessarily share mixture components. We discuss representations of hierarchical Dirichlet processes in terms of a stick-breaking process, and a generalization of the Chinese restaurant process that we refer to as the "Chinese restaurant franchise." We present Markov chain Monte Carlo algorithms for posterior inference in hierarchical Dirichlet process mixtures and describe applications to problems in information retrieval and text modeling.},
+    added-at = {2017-03-30T21:46:18.000+0200},
+    author = {Teh, Yee Whye and Jordan, Michael I. and Beal, Matthew J. and Blei, David M.},
+    biburl = {https://www.bibsonomy.org/bibtex/294d7fac6d9da881b2163c7150859bf6f/becker},
+    interhash = {34e30f6d1538ed136344f6a9cf8a791b},
+    intrahash = {94d7fac6d9da881b2163c7150859bf6f},
+    issn = {01621459},
+    journal = {Journal of the American Statistical Association},
+    keywords = {dirichlet diss hdp hierarchical inthesis mixedtrails model process topic},
+    number = {476},
+    pages = {1566--1581},
+    publisher = {American Statistical Association, Taylor \& Francis, Ltd.},
+    timestamp = {2017-12-20T17:39:18.000+0100},
+    title = {Hierarchical dirichlet processes},
+    url = {http://www.jstor.org/stable/27639773},
+    volume = {101},
+    year = {2006}
+}
+@book{digamma,
+    added-at = {2008-06-25T06:25:58.000+0200},
+    address = {New York},
+    author = {Abramowitz, Milton and Stegun, Irene A.},
+    biburl = {https://www.bibsonomy.org/bibtex/223ec744709b3a776a1af0a3fd65cd09f/a_olympia},
+    description = {BibTeX - Wikipedia, the free encyclopedia},
+    edition = {ninth Dover printing, tenth GPO printing},
+    interhash = {d4914a420f489f7c5129ed01ec3cf80c},
+    intrahash = {23ec744709b3a776a1af0a3fd65cd09f},
+    keywords = {Handbook},
+    publisher = {Dover},
+    timestamp = {2008-06-25T06:25:58.000+0200},
+    title = {Handbook of Mathematical Functions with Formulas, Graphs, and Mathematical Tables},
+    year = {1964}
+}
+@article{ishwaran,
+    ISSN = {01621459},
+    URL = {http://www.jstor.org/stable/2670356},
+    abstract = {A rich and flexible class of random probability measures, which we call stick-breaking priors, can be constructed using a sequence of independent beta random variables. Examples of random measures that have this characterization include the Dirichlet process, its two-parameter extension, the two-parameter Poisson-Dirichlet process, finite dimensional Dirichlet priors, and beta two-parameter processes. The rich nature of stick-breaking priors offers Bayesians a useful class of priors for nonparametric problems, while the similar construction used in each prior can be exploited to develop a general computational procedure for fitting them. In this article we present two general types of Gibbs samplers that can be used to fit posteriors of Bayesian hierarchical models based on stick-breaking priors. The first type of Gibbs sampler, referred to as a Polya urn Gibbs sampler, is a generalized version of a widely used Gibbs sampling method currently employed for Dirichlet process computing. This method applies to stick-breaking priors with a known Polya urn characterization, that is, priors with an explicit and simple prediction rule. Our second method, the blocked Gibbs sampler, is based on an entirely different approach that works by directly sampling values from the posterior of the random measure. The blocked Gibbs sampler can be viewed as a more general approach because it works without requiring an explicit prediction rule. We find that the blocked Gibbs avoids some of the limitations seen with the Polya urn approach and should be simpler for nonexperts to use.},
+    author = {Hemant Ishwaran and Lancelot F. James},
+    journal = {Journal of the American Statistical Association},
+    number = {453},
+    pages = {161--173},
+    publisher = {[American Statistical Association, Taylor & Francis, Ltd.]},
+    title = {Gibbs Sampling Methods for Stick-Breaking Priors},
+    volume = {96},
+    year = {2001}
+}
+@article{ferguson1973,
+    author = {Thomas S. Ferguson},
+    title = {{A Bayesian Analysis of Some Nonparametric Problems}},
+    volume = {1},
+    journal = {The Annals of Statistics},
+    number = {2},
+    publisher = {Institute of Mathematical Statistics},
+    pages = {209 -- 230},
+    year = {1973},
+    doi = {10.1214/aos/1176342360},
+    URL = {https://doi.org/10.1214/aos/1176342360}
+}        
+</script>
